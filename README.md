@@ -15,7 +15,8 @@ which has been built by the KBMAG binary kbprog using
 the -wd option.
 Example of use.
 ./bin/kbprog -v -wd -me 65000 -t 1000 f29
+(creates an initial f29.diff2)
 ./bin/gpcheckx -v -p f29 +rptz
-# f29.wa and f29.diff2 will be correct
+(f29.wa and f29.diff2 will be correct)
 ./bin/gpcheckx -v -geo f29 +rptz
-# f29.geowa will be correct
+( f29.geowa will be correct)
