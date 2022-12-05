@@ -38,8 +38,8 @@ Example of use.
 The difficult examples 3572 and h93.
 
 The main motivation to write gpcheckx was
-to be able to compute in kbmag the automaticity of 
-the groups 3572 and h93.
+to be able to compute in kbmag the automaticity 
+and hyperbolicity of the groups 3572 and h93.
 
 These are defined by text files 3572, h93 containing
 
@@ -48,7 +48,7 @@ _RWS := rec(
   ordering := “shortlex”,
   generatorOrder := [a,A,b,B],
   inverses := [A,a,B,b],
- equations := [[a^3,IdWord],[b^5,IdWord],[(a*b)^7,IdWord],[(a*b*A*B)^2,IdWord]]
+ equations := [[a^3,IdWord],[b^5,IdWord],[(a\*b)^7,IdWord],[(a\*b\*A\*B)^2,IdWord]]
 );
 
 and 
@@ -58,7 +58,8 @@ _RWS := rec(
   ordering := “shortlex”,
   generatorOrder := [a,A,b,B,c,C,d,D,e,E,f,F,g,G,h,H,i,I],
   inverses := [A,a,B,b,C,c,D,d,E,e,F,f,G,g,H,h,I,i],
-  equations := [[a\*d,b], [b\*e,c],[c*f,d],[d*g,e],[e*h,f],[f*i,g],[g*a,h], [h*b,i] [i*c,a]]
+  equations := [[a\*d,b], [b\*e,c],[c\*f,d],[d\*g,e],[e\*h,f],[f\*i,g],[g\*a,h], 
+[h\*b,i] [i\*c,a]]
 );
 
 respectively.
