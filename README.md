@@ -15,7 +15,7 @@ $(BIN)/gpcheckx  \
 after the line $(BIN)/kbprog \
 and the two lines
 ${BIN}/gpcheckx: gpcheckx.o $(FSALIB)
-        $(CC) $(CFLAGS) -o ${BIN}/gpcheckx gpcheckx.o $(FSALIB)
+        $(CC) $(CFLAGS) -o ${BIN}/gpcheckx  gpcheckx.o $(FSALIB)
 before the line clean:
  It requires an initial word difference file ('file name'.diff2)
 which has been built by the KBMAG binary kbprog using 
@@ -27,3 +27,45 @@ Example of use.
 (f29.wa and f29.diff2 will be correct)
 ./bin/gpcheckx -v -geo f29 +rptz
 ( f29.geowa will be correct)
+
+The difficult examples 3572 and h93.
+The main motivation to write gpcheckx was
+to be able to compute in kbmag the automaticity of 
+the groups 3572 and h93.
+These are defined by text files 3572, h93 containing
+
+_RWS := rec(
+  isRWS := true,
+  ordering := “shortlex”,
+  generatorOrder := [a,A,b,B],
+  inverses := [A,a,B,b],
+ equations := [[a^3,IdWord],[b^5,IdWord],[(a*b)^7,IdWord],[(a*b*A*B)^2,IdWord]]
+);
+
+and 
+
+_RWS := rec(
+  isRWS := true,
+  ordering := “shortlex”,
+  generatorOrder := [a,A,b,B,c,C,d,D,e,E,f,F,g,G,h,H,i,I],
+  inverses := [A,a,B,b,C,c,D,d,E,e,F,f,G,g,H,h,I,i],
+  equations := [[a*d,b], [b*e,c],[c*f,d],[d*g,e],[e*h,f],[f*i,g],[g*a,h], [h*b,i] [i*c,a]]
+);
+respectively.
+The correct word acceptor and diff2 files can
+then be computed as follows.
+3572
+./bin/kbprog -wd -t 1000 - me 200000 3572
+./bin/gpcheckx -v -p -s ‘60000;10000’ 3572
+./bin/gpcheckx -p -v 3572 +rptz
+h93
+./bin/kbprog -wd -t 1500 -me 500000 h93
+./bin/gpcheckx -nf  -v  h93
+./bin/gpcheckx -p -s 40000  -to 600 -v  h93
+./bin/gpcheckx -p -s 60000  -to 600 -v  h93
+./bin/gpcheckx -m -s 110000  -to 600 -v  h93
+./bin/gpcheckx -m -s 150000  -to 900 -v  h93
+./bin/gpcheckx -m -s 170000  -to 600 -v  h93
+./bin/gpcheckx -p  -v h93 +rptz
+
+
