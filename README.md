@@ -58,14 +58,23 @@ then be computed as follows.
 ./bin/kbprog -wd -t 1000 - me 200000 3572
 ./bin/gpcheckx -v -p -s ‘60000;10000’ 3572
 ./bin/gpcheckx -p -v 3572 +rptz
+
 h93
+
 ./bin/kbprog -wd -t 1500 -me 500000 h93
+
 ./bin/gpcheckx -nf  -v  h93
+
 ./bin/gpcheckx -p -s 40000  -to 600 -v  h93
+
 ./bin/gpcheckx -p -s 60000  -to 600 -v  h93
+
 ./bin/gpcheckx -m -s 110000  -to 600 -v  h93
+
 ./bin/gpcheckx -m -s 150000  -to 900 -v  h93
+
 ./bin/gpcheckx -m -s 170000  -to 600 -v  h93
+
 ./bin/gpcheckx -p  -v h93 +rptz
 
 
