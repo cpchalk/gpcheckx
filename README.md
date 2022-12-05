@@ -1,5 +1,6 @@
 # gpcheckx
-kbmag program to find word differences quickly using ideas from MAF.
+kbmag program to find word differences quickly using ideas from 
+MAF(https://sourceforge.net/projects/maffsa/).
 
 gpcheckx is a binary that extends the set of binaries making up the kbmag system 
 from Derek Holt at the University of Warwick. 
