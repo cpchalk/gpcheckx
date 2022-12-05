@@ -3,13 +3,13 @@ kbmag program to find word differences quickly using ideas from MAF.
 
 gpcheckx is a binary that extends the set of binaries making up the kbmag system 
 from Derek Holt at the University of Warwick. 
-It can be used as a replacement for the gpcheckmult component
+It provides the equivalent functionality of the gpcheckmult component
 of gpmakefsa and the part of gpgeowa which calculates the word 
-diffferences needed to build the correct geodesic word acceptor 
+differences needed to build the correct geodesic word acceptor 
 ('filename'.geowa). It's aim is to find word differences as efficiently
 as possible so that the resultant word difference file ('file name'.diff2) builds 
 the correct word acceptor ('file name'.wa) and so
-and general multiplier ('file name'.gm).
+the correct general multiplier ('file name'.gm).
  It consists of one source file gpcheckx.c.
 
 To build, edit the kbmag src/makefile to include
@@ -36,7 +36,7 @@ Example of use.
 The difficult examples 3572 and h93.
 
 The main motivation to write gpcheckx was
-to be able to compute in kbmag the automaticity 
+to enable kbmag to compute the automaticity 
 and hyperbolicity of the groups 3572 and h93.
 
 These are defined by text files 3572, h93 containing
