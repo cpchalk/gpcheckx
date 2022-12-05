@@ -17,8 +17,8 @@ $(BIN)\/gpcheckx  \
 after the line $(BIN)\/kbprog \
 and the two lines
 
-\${BIN}\/gpcheckx: gpcheckx.o \$(FSALIB)
-        \$(CC) \$(CFLAGS) -o \${BIN}\/gpcheckx  gpcheckx.o \$(FSALIB)
+$(BIN)\/gpcheckx: gpcheckx.o $(FSALIB)
+        $(CC) $(CFLAGS) -o \$(BIN)\/gpcheckx  gpcheckx.o $(FSALIB)
 
 before the line clean:
 
