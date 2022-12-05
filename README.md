@@ -1,21 +1,25 @@
 # gpcheckx
 kbmag program to find word differences quickly using ideas from MAF.
+
 gpcheckx is a binary that extends the set of binaries making up the kbmag system 
 from Derek Holt at the University of Warwick. 
 It can be used as a replacement for the gpcheckmult component
 of gpmakefsa and the part of gpgeowa which calculates the word 
 diffferences needed to build the correct geodesic word acceptor 
-(''filename'.geowa'. It's aim is to find word differences as efficiently
-as possible so that the resultant word difference file builds 
-the correct word acceptor ('file name'.wa) and 
-and general multiplier ('file name.gm).
+('filename'.geowa). It's aim is to find word differences as efficiently
+as possible so that the resultant word difference file ('file name'.diff2) builds 
+the correct word acceptor ('file name'.wa) and so
+and general multiplier ('file name'.gm).
  It consists of one source file gpcheckx.c.
+
 To build, edit the kbmag makefile to insert the line
-$(BIN)/gpcheckx  \  
-after the line $(BIN)/kbprog \
+$(BIN)\/gpcheckx  \  
+after the line $(BIN)\/kbprog \
 and the two lines
-${BIN}/gpcheckx: gpcheckx.o $(FSALIB)
-        $(CC) $(CFLAGS) -o ${BIN}/gpcheckx  gpcheckx.o $(FSALIB)
+
+${BIN}\/gpcheckx: gpcheckx.o $(FSALIB)
+        $(CC) $(CFLAGS) -o ${BIN}\/gpcheckx  gpcheckx.o $(FSALIB)
+
 before the line clean:
 
  It requires an initial word difference file ('file name'.diff2)
