@@ -17,21 +17,30 @@ and the two lines
 ${BIN}/gpcheckx: gpcheckx.o $(FSALIB)
         $(CC) $(CFLAGS) -o ${BIN}/gpcheckx  gpcheckx.o $(FSALIB)
 before the line clean:
+
  It requires an initial word difference file ('file name'.diff2)
 which has been built by the KBMAG binary kbprog using 
 the -wd option.
+
 Example of use.
+
 ./bin/kbprog -v -wd -me 65000 -t 1000 f29
 (creates an initial f29.diff2)
+
 ./bin/gpcheckx -v -p f29 +rptz
+
 (f29.wa and f29.diff2 will be correct)
+
 ./bin/gpcheckx -v -geo f29 +rptz
+
 ( f29.geowa will be correct)
 
 The difficult examples 3572 and h93.
+
 The main motivation to write gpcheckx was
 to be able to compute in kbmag the automaticity of 
 the groups 3572 and h93.
+
 These are defined by text files 3572, h93 containing
 
 _RWS := rec(
@@ -49,15 +58,24 @@ _RWS := rec(
   ordering := “shortlex”,
   generatorOrder := [a,A,b,B,c,C,d,D,e,E,f,F,g,G,h,H,i,I],
   inverses := [A,a,B,b,C,c,D,d,E,e,F,f,G,g,H,h,I,i],
-  equations := [[a*d,b], [b*e,c],[c*f,d],[d*g,e],[e*h,f],[f*i,g],[g*a,h], [h*b,i] [i*c,a]]
+  equations := [[a\*d,b], [b\*e,c],[c*f,d],[d*g,e],[e*h,f],[f*i,g],[g*a,h], [h*b,i] [i*c,a]]
 );
+
 respectively.
-The correct word acceptor and diff2 files can
+
+The correct word acceptor, diff2 and geowa files can
 then be computed as follows.
+
 3572
+
 ./bin/kbprog -wd -t 1000 - me 200000 3572
+
 ./bin/gpcheckx -v -p -s ‘60000;10000’ 3572
+
 ./bin/gpcheckx -p -v 3572 +rptz
+
+./bin/gpcheckx -geo -v 3572 +rptz
+
 
 h93
 
@@ -77,8 +95,10 @@ h93
 
 ./bin/gpcheckx -p  -v h93 +rptz
 
+./bin/gpcheckx -geo -v h93 +rptz
 
-Proving Non-hyperbolicity
+Proving Non-hyperbolicity.
+
 If we suspect that a group is not hyperbolic, it is useful
 to spot patterns by tracing the geodesic equations which give rise
 to new geodesic word differences. This is
