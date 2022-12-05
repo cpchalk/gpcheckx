@@ -12,17 +12,11 @@ the correct word acceptor ('file name'.wa) and so
 and general multiplier ('file name'.gm).
  It consists of one source file gpcheckx.c.
 
-To build, edit the kbmag src/makefile to insert the line
-$(BIN)\/gpcheckx  \  
-after the line $(BIN)\/kbprog \
-and the two lines
+To build, edit the kbmag src/makefile to include
+gpcheckx in the list of binaries to be built, using, for example,
+the build specification for gpcheckmult as a template.  
 
- ${BIN}/gpcheckx: gpcheckx.o $(FSALIB)
-        $(CC) $(CFLAGS) -o \$(BIN)\gpcheckx  gpcheckx.o $(FSALIB)
-
-before the line clean:
-
- It requires an initial word difference file ('file name'.diff2)
+ It requires the presence of the word difference file ('file name'.diff2)
 which has been built by the KBMAG binary kbprog using 
 the -wd option.
 
