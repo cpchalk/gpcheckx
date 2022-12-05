@@ -12,13 +12,13 @@ the correct word acceptor ('file name'.wa) and so
 and general multiplier ('file name'.gm).
  It consists of one source file gpcheckx.c.
 
-To build, edit the kbmag makefile to insert the line
+To build, edit the kbmag src/makefile to insert the line
 $(BIN)\/gpcheckx  \  
 after the line $(BIN)\/kbprog \
 and the two lines
 
-$(BIN)\/gpcheckx: gpcheckx.o $(FSALIB)
-        $(CC) $(CFLAGS) -o \$(BIN)\/gpcheckx  gpcheckx.o $(FSALIB)
+ ${BIN}/gpcheckx: gpcheckx.o $(FSALIB)
+        $(CC) $(CFLAGS) -o \$(BIN)\gpcheckx  gpcheckx.o $(FSALIB)
 
 before the line clean:
 
