@@ -78,3 +78,10 @@ h93
 ./bin/gpcheckx -p  -v h93 +rptz
 
 
+Proving Non-hyperbolicity
+If we suspect that a group is not hyperbolic, it is useful
+to spot patterns by tracing the geodesic equations which give rise
+to new geodesic word differences. This is
+achieved by the -ve option. For example
+
+./bin/gpcheckx -geo -ve f38
