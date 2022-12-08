@@ -97,11 +97,36 @@ h93
 
 ./bin/gpcheckx -geo -v h93 +rptz
 
+Another example of an automatic group which kbmag 
+finds difficult to compute is the Fibonacci group
+F(4,6) defined by the file f46 with contents:-
+
+_RWS := rec(
+  isRWS := true,
+  ordering := “shortlex”,
+  generatorOrder := [a,A,b,B,c,C,d,D,e,E,f,F],
+  inverses := [A,a,B,b,C,c,D,d,E,e,F,f],
+  equations := 
+[[a\*b\*c\*d,e], [b\*c\*d\*e,f],
+ [c\*d\*e\*f,a],[d\*e\*f\*a,b],
+ [e\*f\*a\*b,c],[f\*a\*b\*c,d]]
+);
+
+The correct diff2 and wa files can then be
+calculated as follows.
+
+./bin/kbprog -wd -t 1000 -me 200000 f46
+
+./bin/gpcheckx -v -p -s ‘4000;1000’ f46
+
+./bin/gpcheckx -v -p f46 +rptz
+
 Proving Non-hyperbolicity.
 
-If we suspect that a group is not hyperbolic, it is useful
+If we suspect that a group is not hyperbolic (for example the group
+F(4,6), defined above, turns out not to be hyperbolic), it can be useful
 to spot patterns by tracing the geodesic equations which give rise
 to new geodesic word differences. This is
-achieved by the -ve option. For example
+achieved by specifying the -ve option. For example
 
-./bin/gpcheckx -geo -ve f38
+./bin/gpcheckx -geo -ve f46
