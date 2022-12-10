@@ -20,10 +20,12 @@ the build specification for gpcheckmult as a template.
 which has been built by the KBMAG binary kbprog using 
 the -wd option.
 
-Example of use.
+Example of use. The file f29 defines 
+the Fibonacci group F(2,9) and can be
+found in the KBMAG test library.
 
 ./bin/kbprog -v -wd -me 65000 -t 1000 f29
-(creates an initial f29.diff2)
+(creates an initial file f29.diff2)
 
 ./bin/gpcheckx -v -p f29 +rptz
 
