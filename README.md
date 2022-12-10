@@ -58,7 +58,7 @@ _RWS := rec(
   generatorOrder := [a,A,b,B,c,C,d,D,e,E,f,F,g,G,h,H,i,I],
   inverses := [A,a,B,b,C,c,D,d,E,e,F,f,G,g,H,h,I,i],
   equations := [[a\*d,b], [b\*e,c],[c\*f,d],[d\*g,e],[e\*h,f],[f\*i,g],[g\*a,h], 
-[h\*b,i] [i\*c,a]]
+[h\*b,i], [i\*c,a]]
 );
 
 respectively.
