@@ -546,6 +546,8 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean prefixby1=FALSE;
   boolean do_beginswith=FALSE;
   char *bwqual1;
+  boolean diff2name_command = FALSE;
+  char *diff2namestr;
   boolean exwa_command = FALSE;
   boolean exminex_command = FALSE;
   char * ex_str_wa, *ex_str_minex;
@@ -554,6 +556,9 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean add_diagonals=FALSE;
   boolean all_diagonals=FALSE;
   boolean check_diagonals=FALSE;
+  int start_diagonals;
+  int end_diagonals;
+  int limit_diagonals;
 
   int verify_qualifier;
   kbm_huge = TRUE;
@@ -602,6 +607,15 @@ int main2(argc, argv, read_last_wa,wa_size)
     }
     else if (strcmp(argv[arg],"-diagonals")==0)
     {
+      arg+=3;
+      if (arg >= argc)
+      {
+	printf("-diagonals should be followed by start and limit values (or 0 0 0)\n");
+        badusage_gpcheckx(FALSE);
+      }
+	start_diagonals=atoi(argv[arg-2]);
+	end_diagonals=atoi(argv[arg-1]);
+	limit_diagonals=atoi(argv[arg]);
 	add_diagonals=TRUE;
 	all_diagonals=TRUE;
     }
@@ -643,6 +657,17 @@ int main2(argc, argv, read_last_wa,wa_size)
 	dump_files=TRUE;
     else if (strcmp(argv[arg],"-prefixby1")==0)
    	 prefixby1=TRUE;
+    else if (strcmp(argv[arg],"-diff2name")==0)
+    {
+		arg+=1;
+      	if (arg >= argc)
+      	{
+		printf("-diff2name should be followed by one string\n");
+        	badusage_gpcheckx(FALSE);
+      	}
+	diff2name_command=TRUE;
+	diff2namestr=argv[arg];
+    }
     else if (strcmp(argv[arg],"-execwa")==0)
     {
 		arg+=1;
@@ -855,24 +880,32 @@ int main2(argc, argv, read_last_wa,wa_size)
   fclose(rfile);
   if (fsa_table_dptr_init(new_diff2)== -1) return -1;
   if (!add_diagonals && use_andnot)  {
-  strcat(inf2x,"diag"); // gpname.diff2diag
-  if ((rfile = fopen(inf2x,"r")) != 0) {
-  	tmalloc(diff2diag,fsa,1);
-  	fsa_read(rfile,diff2diag,DENSE,0,0,TRUE,fsaname);
-  	fclose(rfile);
-  	if (fsa_table_dptr_init(diff2diag)!= -1) {
-  		rs_wd2.wd_fsa=diff2diag;
-		Printf("%s used for reducing lhs words\n",inf2x);
+	if (diff2name_command) {
+  		strcat(inf2x,diff2namestr); // gpname.diff2+diff2namestr
+  		if ((rfile = fopen(inf2x,"r")) != 0) {
+  			tmalloc(diff2diag,fsa,1);
+  			fsa_read(rfile,diff2diag,DENSE,0,0,TRUE,fsaname);
+  			fclose(rfile);
+  			if (fsa_table_dptr_init(diff2diag)!= -1) {
+  				rs_wd2.wd_fsa=diff2diag;
+				Printf("%s used for reducing lhs words\n",inf2x);
+			}
+		}
+		else {
+        		fprintf(stderr,"Cannot open file %s.\n",inf2x);
+          		exit(1);
+		}
 	}
-  }
   }
   reduce_word=diff_reducex;
   ngens = diff2->alphabet->base->size;
   diag_diff2=NULL;
   if (calculate_inverses(&inv,ngens,&rs_wd)==-1) return -1;
-  if (add_diagonals && !read_wa)
+  if (add_diagonals)
   {
   	int diag_diff2_max=diff2->states->size * ngens;
+	//int end1;
+	//int end2;
   	if ((rfile = fopen(inf2,"r")) == 0) {
        	 fprintf(stderr,"Cannot open file %s.\n",inf2);
           exit(1);
@@ -881,8 +914,23 @@ int main2(argc, argv, read_last_wa,wa_size)
   	fsa_read(rfile,diag_diff2,DENSE,0,diag_diff2_max,TRUE,fsaname);
   	fclose(rfile);
   	if (fsa_table_dptr_init(diag_diff2)== -1) return -1;
-  	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,gpname);
+  	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,start_diagonals,end_diagonals,limit_diagonals,gpname);
   	Printf("diff2 with diagonals has %d states\n",diag_diff2->states->size);
+	if (diff2name_command) {
+		char inf2xx [100];
+  		strcat(inf2xx,".diff2"); 
+  		strcat(inf2xx,diff2namestr); 
+      		write_fsa (diag_diff2,gpname,inf2xx,fsaname);
+	}
+	else
+	{
+      		write_fsa (diag_diff2,gpname,".diff2d",fsaname);
+	}
+	if (read_wa)
+	{
+    		free_fsa(diag_diff2);
+		exit(0);
+	}
   }
   strcat(inf3,".andnot");
   strcpy(outf,inf3);
@@ -890,11 +938,15 @@ int main2(argc, argv, read_last_wa,wa_size)
   strcat(tempfilename,"temp_XXX");
 
   if (!use_andnot && !read_wa && !exwa_command) {
-      Printf("calling fsa_wa_x on %s.diff2\n",gpname);
-      if (add_diagonals)
+      if (add_diagonals) {
+        Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname);
       	gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE);
-      else
+    	free_fsa(diag_diff2);
+      }
+      else {
+        Printf("calling fsa_wa_x on %s.diff2\n",gpname);
       	gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
+      }
       if (kbm_print_level>1)
         printf("  #Number of states of gpwa before minimisation = %d.\n",
             gpwa->states->size);
@@ -913,21 +965,12 @@ int main2(argc, argv, read_last_wa,wa_size)
     if (exwa_command && !read_wa) {
     	//char command [80];
     	//sprintf(command,"%s %s>cpcd",ex_str_wa,gpname);
-	if (add_diagonals) {
-      		write_fsa (diag_diff2,gpname,".diff2d",fsaname);
-	}
+	//if (add_diagonals) {
+      	//	write_fsa (diag_diff2,gpname,".diff2d",fsaname);
+	//}
     	Printf("calling %s\n",ex_str_wa);
     	int res=system(ex_str_wa);
-	if (add_diagonals) {
-	char outf [100];
-	sprintf(outf,"%s.%s",gpname,"diff2d");
-	strcpy(outf,gpname);
-        strcat(outf,".diff2d");
-	Printf("deleting %s\n",outf);
-	unlink(outf);
-	}
     }
-    free_fsa(diag_diff2);
     if ((rfile = fopen(inf4,"r")) == 0) {
         fprintf(stderr,"Cannot open file %s.\n",inf4);
         exit(1);
@@ -2075,6 +2118,14 @@ else
 	else
 		continue;
       }
+ //         genstrcpy(rhs_word,lhs_word);
+  //        diff_reducex(rhs_word,rs_wd2);
+//	  if (rhs_word[0] != lhs_word[0]) {
+  // awful!!i
+ //               display_eqn(si,lhs_word,rhs_word,
+//				diff2->alphabet->base->names);
+//		  break;
+//	  }
 	
       if (TRACE2)
 		printf("one_level_reducible called. target is %d\n",j);
@@ -2089,7 +2140,6 @@ else
                  printf("calling diff_reduce\n");
           }
 
-          diff_reducex(rhs_word,rs_wd2);
     	  int **watable=gpwa->table->table_data_ptr;
 	  int len=genstrlen(rhs_word);
 	  int i=0; 
@@ -2112,7 +2162,7 @@ else
 	  //  diff_reduce doesnt always reduce a word  which is minimally reducible and reduces to a shorter word
 	  //  but fsa_wa_x can build a wa, where such words are marked as reducible
 	  // form inverse of rhs_word, reduce it, then reduce the inverse of the reduction.
-		PPrintf("!");
+		//PPrintf("!");
   		gen rhs_word2[MAX_WORD_LEN];
           	genstrcpy(rhs_word2,rhs_word);
 	  	//int len = genstrlen(rhs_word);
@@ -2146,7 +2196,10 @@ else
           	if (!genstrcmp(rhs_word,rhs_word2)) 
 		{
 			// need a better diff_reduce!
-			PPrintf("*!");
+			//PPrintf("*!");
+                  display_eqn(si,lhs_word,rhs_word,
+				diff2->alphabet->base->names);
+			break;
 			continue;
 		}
 		
@@ -5280,12 +5333,15 @@ void write_fsa (fsa_to_print,gpname,postfix,fsaname)
 
 
 //based on  make_full_wd_fsa(wd_fsaptr,inv,start_no,rsptr)
-int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,gpname)
+int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,start,end,limit, gpname)
 	fsa *wd_fsaptr;
 	int *inv;
         reduction_struct *rsptr;
 	boolean all_diagonals;
 	boolean check_diagonals;
+	int start;
+	int end;
+	int limit;
 	char *gpname;
 /* Close the set of word-differences under action g,$, then add all possible
  * new transitions.
@@ -5295,6 +5351,8 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,gp
   gen **wdn, *stw, *ptr, *ptre, *ptr2;
   static boolean hadwarning=FALSE;
   gen testword[4096];
+
+Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 
   size_pba = 1 + wd_fsaptr->alphabet->base->size;
   ns = wd_fsaptr->states->size;
@@ -5331,18 +5389,28 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,gp
   }
   int start_no=wd_fsaptr->states->size+1;
   int trace=0;
+  int startstate=2;
+  int endstate=ns;
+  if (start>2 && start<=ns)
+	startstate=start;
+  if (end>0 && end<ns && end>=start)
+	endstate=end;
   for (gen1=1;gen1<size_pba;gen1++)
-  //for (gen1=1;gen1<10;gen1++)
+  //for (gen1=start;gen1<10;gen1++)
   {
-//	if (total_diagonals>999)
-//		break;
+	if (limit>0 && (total_diagonals>limit)){
+		Printf("%d diagonals exceeds limit\n",total_diagonals);
+		break;
+	}
   //printf("gen1=%d,ns=%d\n",gen1,ns);
 	// multiply every wd by a generator on the left
 	// to get all possible 'diagonal word differences'
 	// where a 'square' exists
-  for (i=2;i<=ns;i++){
+  for (i=startstate;i<=endstate;i++){
     int gen2=1;
     int jj=0;
+	if (limit>0 && (total_diagonals>limit))
+	   break;	
     if (diff2c) {
     	jj=diff_no(diff2c,wdn[i]);
     	if (jj==0) {
@@ -5352,8 +5420,8 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,gp
     	}
     }
     for (gen2=1;gen2<size_pba;gen2++) {
-//	if (total_diagonals>999)
-//	   break;	
+	if (limit>0 && (total_diagonals>limit))
+	   break;	
 	if (dense_dtarget(wd_table,gen1,gen2,i)){
     		testword[0]=inv[gen1];
     		genstrcpy(testword+1,wdn[i]);
@@ -5388,7 +5456,7 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,gp
 			//if (j==0 && (((++total_diagonals)%2)))
 			//if (j==0 && (!((++total_diagonals)%2)))
 			{
-				//total_diagonals++;
+				total_diagonals++;
       				n = (++wd_fsaptr->states->size);
       				if (n > wd_fsaptr->table->maxstates){
         				fprintf(stderr,"Too many word-differences. Increase maxwdiffs.\n");
@@ -5402,9 +5470,10 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,gp
 		}
 		break;
 	}
-    }
-  }
-  }
+    } //for (gen2=1;gen2<size_pba;gen2++)
+  } //for (i=2;i<=ns;i++
+  } //for (gen1=1;gen1<size_pba;gen1++)
+Printf("Total diagonals=%d,limit=%d\n",total_diagonals,limit);
 if (check_diagonals) {
 	printf("checking..\n");
         printf("letters\n");
