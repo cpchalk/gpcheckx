@@ -142,23 +142,23 @@ the equation wd2=g1^-1wd1g2, for some generators g1, g2,
 then the word g1^-1wd1 is a diagonal of wd1. This leads 
 the following procedure for calculating the word acceptor
 of such automatic groups.
-0. Run kbprog for a short time to improve the likelihood
+S0. Run kbprog for a short time to improve the likelihood
 that all calculated word differences contained in gpname.diff2
 are 'non-spurious'. 
-1. Calculate all possible diagonal words of diff2 and 
+S1. Calculate all possible diagonal words of diff2 and 
 add these to make a larger diff2'
-2. Calculate the word acceptor wa1 based on diff2 GPWA(diff2) , 
+S2. Calculate the word acceptor wa1 based on diff2 GPWA(diff2) , 
 and calculate the word acceptor wa2 based on the larger diff2'
 GPWA(.
-3 Perform the  fsa operatio wa1 ANDNOT wa2 to create the 
+S3 Perform the  fsa operatio wa1 ANDNOT wa2 to create the 
 fsa gp.andnot. gp.andnot will recognise lhs words which
 are reducible in wa2 using the wd set diff2'but which are
 are not reducible in wa1.
-4. Create a list of  lhs words sampled from gpname.andnot.
+S4. Create a list of  lhs words sampled from gpname.andnot.
 For each such lhs, calculate rhs=reduced(lhs) using diff2' 
 Then calculate the word differences lhs(i)^-1rhs for i ranging from 1 to 
 the length(lhs)-1 and any new ones to diff2.
-Repeat steps 1 to 4 until w1 and w2 are equal.
+Repeat steps S1 to S4 until w1 and w2 are equal.
 
 The options -diagonals s e l  and -diff2name 'diff2suffix' are 
 provided to perform the  above procedure. 
