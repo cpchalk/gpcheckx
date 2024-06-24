@@ -136,7 +136,7 @@ achieved by specifying the -ve option. For example
 
 # Using diagonals to build the correct word acceptor.  
 It has been observed that, in nearly every case, the complete 
-set of word differences consists of so called 'diagonal' word 
+set of word differences of an automatic group consists of so called 'diagonal' word 
 differences. If two word differences wd1 and wd2 satisfy 
 the equation wd2=g1^-1wd1g2, for some generators g1, g2,
 then the word g1^-1wd1 is called a diagonal of wd1. This leads 
