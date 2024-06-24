@@ -176,30 +176,30 @@ then repeatedly execute the cycle defined by the
 followin script  
 
 
-# calculate 3572.wa1 using 3572.diff2
+'calculate 3572.wa1 using 3572.diff2'
 
 ./bin/gpcheckx -execwa './dowa 3572 >mfile' -waonly  -v  3572
 cp 3572.wa 3572.wa1
 
-# calculate all the diagonals of 3572.diff2 to make word difference file 
-# 3572.diff2diaggoody
+'calculate all the diagonals of 3572.diff2 to make word difference file' 
+'3572.diff2diaggoody'
 
 ./bin/gpcheckx  -diagonals 0 0 0 -diff2name diaggoody -w  -v  3572
 
-# calculate 3572.wa2 using 3572.diff2diaggoody (using temporary file 3752,diff2d)
+'calculate 3572.wa2 using 3572.diff2diaggoody (using temporary file 3752,diff2d)'
 
 cp 3572.diff2diaggoody 3572.diff2d
 ./dowa 3572 >mfile
 rm 3572.diff2d
 cp 3572.wa 3572.wa2
 
-# calculate 3752.andnot   
+'calculate 3752.andnot'   
 
 ../../maf/bin/fsaandnot 3572.wa1 3572.wa2 3572.andnot >mfile2
 
-# extract new word differences from the reducible lhs words in 3572.andnot. 
-# Create the lhs=rhs equations using 3572.wa1 and 3572.diff2diagody as the 
-# current word acceptor and word difference set respectively 
+'extract new word differences from the reducible lhs words in 3572.andnot.' 
+'Create the lhs=rhs equations using 3572.wa1 and 3572.diff2diagody as the' 
+'current word acceptor and word difference set respectively '
 
 ./bin/gpcheckx -t -to 500 -diff2name diaggoody -v 3572
 
