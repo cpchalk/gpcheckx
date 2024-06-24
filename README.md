@@ -146,8 +146,8 @@ procedure for extracting new word differences .
 
 
 S0. Run kbprog for a short time to improve the likelihood
-that all calculated word differences contained in gpname.diff2
-are 'non-spurious'. 
+that all calculated word differences contained in 
+gpname.diff2 (or diff2 for short) are 'non-spurious'. 
 
 S1. Calculate all possible diagonal words of diff2 and 
 add these to make a larger word difference set diff2'.
@@ -160,7 +160,7 @@ difference set diff2'
 S3  'Compare' the word acceptors wa1 and wa2, by 
 performing the fsa operation wa1 ANDNOT wa2 to create the 
 fsa gpname.andnot. This fsa will recognise reducible lhs words which
-which fail to be recognised as such in wa2. These words will be 
+which fail to be recognised as such in wa1. These words will be 
 reducible using the word difference set diff2', but not be reducible 
 using the word difference set diff2.
 
@@ -176,8 +176,8 @@ have a small size.
 The aim of this procedure is to produce a word acceptor with 
 a sufficiently small number of states so that it can 
 then be used in the more memory intensive processes shown 
-in the examples above  (for example calling gpcheckx with 
-the -p option) to extract more word differences.
+in the examples in the previous section  (for example calling gpcheckx with 
+the -p option) in order to extract more word differences.
 
 The gpcheckx options -diagonals s e l  and -diff2name 'diff2suffix' are 
 provided to implement steps S1 and S4 of the  above 
@@ -194,7 +194,7 @@ Example: 3572 calculation using diagonals.
 ./bin/kbprog -wd -t -me 50000 3572
 
 then repeatedly execute the cycle defined by the 
-followin script (comments contained in '').  
+following script (comments contained in '').  
 
 'calculate 3572.wa1 using 3572.diff2'
 
@@ -242,11 +242,13 @@ word acceptors each with 230000+ plus states, a 'small'
 word acceptor with 47611 states is built.
 The process
 ./bin/gpcheckx -p -v -w 3572 
-then extracts more word differences to add to diff2. 
+using this word acceptor then extracts more word differences 
+to add to diff2. 
 But these extra word differences result in the building 
-of a much larger word acceptor. 
-So we resume the cycle of adding diagonals  and comparing 
-word accepters to try and build a smaller word acceptor again. 
+of a large word acceptor of 220000+ states.
+So we resume the cycle of adding diagonals to the 
+word difference set and comparing word acceptors to 
+try and build a smaller word acceptor again. 
 This time the process soon finishes with the building 
 of a 'small' word acceptor of 47613 states which, this time,  
 happens to be the correct word acceptor.
