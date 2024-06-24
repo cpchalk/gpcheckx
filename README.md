@@ -134,7 +134,7 @@ achieved by specifying the -ve option. For example
 
 ./bin/gpcheckx -geo -ve f46
 
-# Using diagonals to bild the correct word acceptor.  
+# Using diagonals to build the correct word acceptor.  
 It has been observed that in nearly every case the complete 
 set of word differences consists of so called 'diagonal' word 
 differences. If two word differences wd1 and wd2 satisfy 
