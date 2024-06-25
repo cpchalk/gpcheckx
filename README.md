@@ -135,14 +135,14 @@ achieved by specifying the -ve option. For example
 ./bin/gpcheckx -geo -ve f46
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
-It has been observed that, in nearly every case, the complete 
+It has been observed that, in many cases, the complete 
 set of word differences of an automatic group consists entirely 
-of so called 'diagonal' word differences. 
+or almost entirely of so called 'diagonal' word differences. 
 If two word differences wd1 and wd2 satisfy the equation 
 wd2=g1^-1wd1g2, for some generators g1, g2,
 then the word g1^-1wd1 is called a diagonal of wd1. 
 This observation leads to considering the following 
-procedure for extracting new word differences . 
+speculative procedure for extracting new word differences . 
 
 
 S0. Run kbprog for a short time to improve the likelihood
