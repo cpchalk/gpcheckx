@@ -249,17 +249,20 @@ if test -f $1.diff2c; then
 fi
 
 
-Results: After 11 cycles of comparing pairs of large 
-word acceptors each with 230000+ plus states, a 'small' 
-word acceptor with 47611 states is built.
-The process
+Results: 
+After 11 cycles of comparing pairs of large word acceptors, 
+each with 230000+ plus states, a 'small' word acceptor 
+with 47611 states is built.
+The 'build and check multiplier' type process
+
 ./bin/gpcheckx -p -v -w 3572 
-using this word acceptor then extracts more word differences 
+
+uses this word acceptor to then extracts more word differences 
 to add to diff2. 
 But these extra word differences result in the building 
 of a large word acceptor of 220000+ states.
-So we resume the cycle of adding diagonals to the 
-word difference set and comparing word acceptors to 
+So we resume the cycle of adding diagonals to the diff2
+word difference set and compare word acceptors to 
 try and build a smaller word acceptor again. 
 This time the process soon finishes with the building 
 of a 'small' word acceptor of 47613 states which, this time,  
