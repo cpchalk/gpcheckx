@@ -556,9 +556,9 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean add_diagonals=FALSE;
   boolean all_diagonals=FALSE;
   boolean check_diagonals=FALSE;
-  int start_diagonals;
-  int end_diagonals;
-  int limit_diagonals;
+  int start_diagonals=0;
+  int end_diagonals=0;
+  int limit_diagonals=0;
 
   int verify_qualifier;
   kbm_huge = TRUE;
