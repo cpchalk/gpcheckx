@@ -4,9 +4,9 @@ kbmag program to find word differences quickly using ideas from MAF (https://sou
 gpcheckx is a binary that extends the set of binaries making up the kbmag system 
 from Derek Holt at the University of Warwick. 
 It provides the equivalent functionality of the gpcheckmult component
-of gpmakefsa and the part of gpgeowa which calculates the word 
+of gpmakefsa (-p option) and the part of gpgeowa which calculates the word 
 differences needed to build the correct geodesic word acceptor 
-('filename'.geowa). It's aim is to find word differences as efficiently
+'filename'.geowa (-geo option). It's aim is to find word differences as efficiently
 as possible so that the resultant word difference file ('file name'.diff2) builds 
 the correct word acceptor ('file name'.wa) and so
 the correct general multiplier ('file name'.gm).
@@ -159,7 +159,7 @@ difference set diff2'
 
 S3  'Compare' the word acceptors wa1 and wa2, by 
 performing the fsa operation wa1 ANDNOT wa2 to create the 
-fsa gpname.andnot. This fsa will recognise reducible lhs words which
+fsa gpname.andnot. This fsa will recognise reducible lhs words 
 which fail to be recognised as such in wa1. These words will be 
 reducible using the word difference set diff2', but not be reducible 
 using the word difference set diff2.
@@ -182,7 +182,7 @@ the -p option) in order to extract more word differences.
 The gpcheckx options -diagonals s e l  and -diff2name 'diff2suffix' are 
 provided to implement steps S1 and S4 of the  above 
 procedure. 
-The option '-diagonal s e l' indicates that diagonals are to be calculated
+The option '-diagonals s e l' indicates that diagonals are to be calculated
 and added to gpname.diff2'diff2suffix' according to the filter 
 s(tart word difference), e(nd word difference and l(imit or maximimum 
 total of diagonals).
@@ -210,8 +210,11 @@ larger word difference file, 3572.diff2diaggoody'
 (using temporary file 3752,diff2d)'
 
 cp 3572.diff2diaggoody 3572.diff2d
+
 ./dowa 3572 >mfile
+
 rm 3572.diff2d
+
 cp 3572.wa 3572.wa2
 
 'calculate 3752.andnot'   
@@ -227,15 +230,24 @@ cp 3572.wa 3572.wa2
 where script 'dowa' is 
 
 if test -f $1.diff2d; then
+
 	cp $1.diff2d $1.diff1c
+
 else
+
 	cp $1.diff2 $1.diff1c
+
 fi
+
 ../../maf/bin/gpwa $1
+
 cp $1.pwa $1.wa
+
 if test -f $1.diff2c; then
+
 	cp $1.diff2c $1.diff1c
 fi
+
 
 Results: After 11 cycles of comparing pairs of large 
 word acceptors each with 230000+ plus states, a 'small' 
