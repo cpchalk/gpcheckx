@@ -257,7 +257,7 @@ The 'build and check multiplier' type process
 
 ./bin/gpcheckx -p -v -w 3572 
 
-uses this word acceptor to then extracts more word differences 
+uses this word acceptor to then extract more word differences 
 to add to diff2. 
 But these extra word differences result in the building 
 of a large word acceptor of 220000+ states.
