@@ -136,26 +136,36 @@ achieved by specifying the -ve option. For example
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
-set of word differences of an automatic group consists entirely 
-or almost entirely of so called 'diagonal' word differences. 
+set of word differences of an automatic group consists entirely, 
+or almost entirely, of so called 'diagonal' word differences. 
 If two word differences wd1 and wd2 satisfy the equation 
 wd2=g1^-1wd1g2, for some generators g1, g2,
-then the word g1^-1wd1 is called a diagonal of wd1. 
-This observation leads to considering the following 
-speculative procedure for extracting new word differences . 
+then the word diagwd=g1^-1wd1 is called a diagonal of wd1. 
+So in the word difference fsa there would be a g1,$ transition
+between wd1 and diagwd.
+
+This observation suggests the following speculative procedure for 
+extracting new word differences . 
 
 
-S0. Run kbprog for a short time to improve the likelihood
-that all calculated word differences contained in 
-gpname.diff2 (or diff2 for short) are 'non-spurious'. 
+S0. Run kbprog for a short time to get an initial set
+of word differences contained in the gpname.diff2 file 
+(or diff2). 
 
 S1. Calculate all possible diagonal words of diff2 and 
-add these to make a larger word difference set diff2'.
+add these  to make a larger word difference set 
+diff2'.
 
-S2. Use the executable GPWA to calculate the word acceptor, wa1, 
-based on the word diference set diff2.
-Then calculate the word acceptor, wa2, based on the larger word 
-difference set diff2'
+S2. Use a suitable  binary, GPWA, to build the 
+word acceptor, wa1, based on the word diference set diff2.
+Then similarly build the word acceptor, wa2, based on the larger word 
+difference set diff2'.
+
+[Please note: It is important that GPWA recogises potentially 
+reducible words by detecting the presence of a 'g,$' trasition between 
+a pair of word differences.
+We assume here that the MAF binary for building a word acceptor,
+maf/bin/gpwa, is available.]
 
 S3  'Compare' the word acceptors wa1 and wa2, by 
 performing the fsa operation wa1 ANDNOT wa2 to create the 
@@ -179,15 +189,11 @@ then be used in the more memory intensive processes shown
 in the examples in the previous section  (for example calling gpcheckx with 
 the -p option) in order to extract more word differences.
 
-The gpcheckx options -diagonals s e l  and -diff2name 'diff2suffix' are 
+The gpcheckx options -diagonals  and -diff2name 'diff2suffix' are 
 provided to implement steps S1 and S4 of the  above 
 procedure. 
-The option '-diagonals s e l' indicates that diagonals are to be calculated
-and added to gpname.diff2'diff2suffix' according to the filter 
-s(tart word difference), e(nd word difference and l(imit or maximimum 
-total of diagonals).
-Specifying -diagonals 0 0 0 indicates that all possible diagonals will 
-added to diff2'.
+The option '-diagonals' indicates that diagonals are to be calculated
+and added to gpname.diff2'diff2suffix'.
 
 Example: 3572 calculation using diagonals.
 
@@ -198,20 +204,21 @@ following script (comments contained in '').
 
 'calculate 3572.wa1 using 3572.diff2'
 
-./bin/gpcheckx -execwa './dowa 3572 >mfile' -waonly  -v  3572
+./bin/gpcheckx -execwa './gpwa 3572 >mfile' -waonly  -v  3572
+
 cp 3572.wa 3572.wa1
 
 'calculate all the diagonals of 3572.diff2 to make the 
 larger word difference file, 3572.diff2diaggoody'
 
-./bin/gpcheckx -diagonals 0 0 0 -diff2name diaggoody -w  -v  3572
+./bin/gpcheckx -diagonals  -diff2name diaggoody -w  -v  3572
 
-'calculate 3572.wa2 using 3572.diff2diaggoody 
-(using temporary file 3752,diff2d)'
+'calculate 3572.wa2 based on 3572.diff2diaggoody 
+
 
 cp 3572.diff2diaggoody 3572.diff2d
 
-./dowa 3572 >mfile
+./gpwa 3572 >mfile
 
 rm 3572.diff2d
 
@@ -219,7 +226,7 @@ cp 3572.wa 3572.wa2
 
 'calculate 3752.andnot'   
 
-../../maf/bin/fsaandnot 3572.wa1 3572.wa2 3572.andnot >mfile2
+ maf/bin/fsaandnot 3572.wa1 3572.wa2 3572.andnot >mfile2
 
 'extract new word differences from the reducible lhs words in 3572.andnot.' 
 'Create the lhs=rhs equations using 3572.wa1 and 3572.diff2diagody as the' 
@@ -227,7 +234,7 @@ cp 3572.wa 3572.wa2
 
 ./bin/gpcheckx -t -to 500 -diff2name diaggoody -v 3572
 
-where script 'dowa' is 
+where 'gpwa' is a script which invokes the MAF gpwa
 
 if test -f $1.diff2d; then
 
@@ -239,14 +246,10 @@ else
 
 fi
 
-../../maf/bin/gpwa $1
+maf/bin/gpwa $1
 
 cp $1.pwa $1.wa
 
-if test -f $1.diff2c; then
-
-	cp $1.diff2c $1.diff1c
-fi
 
 
 Results: 
@@ -259,8 +262,8 @@ The 'build and check multiplier' type process
 
 uses this word acceptor to then extract more word differences 
 to add to diff2. 
-But these extra word differences result in the building 
-of a large word acceptor of 220000+ states.
+But a word acceptor built with these extra word differences 
+is again large with 220000+ states.
 So we resume the cycle of adding diagonals to the diff2
 word difference set and compare word acceptors to 
 try and build a smaller word acceptor again. 
