@@ -607,6 +607,11 @@ int main2(argc, argv, read_last_wa,wa_size)
     }
     else if (strcmp(argv[arg],"-diagonals")==0)
     {
+	add_diagonals=TRUE;
+	all_diagonals=TRUE;
+    }
+    else if (strcmp(argv[arg],"-diagonalsx")==0)
+    {
       arg+=3;
       if (arg >= argc)
       {
