@@ -22,7 +22,6 @@ all:    $(BIN)/kbprog \
 	$(BIN)/gpmult $(BIN)/gpgenmult2 $(BIN)/gpmult2 \
 	$(BIN)/gpcomp $(BIN)/gpaxioms $(BIN)/gpminkb $(BIN)/gpdifflabs \
 	$(BIN)/gpmakefsa $(BIN)/wordreduce $(BIN)/gpgeowa \
-	$(BIN)/wordreducex \
 	$(BIN)/ppgap $(BIN)/ppgap4 $(BIN)/autgroup\
 	$(BIN)/midfadeterminize $(BIN)/kbprogcos $(BIN)/gpmigenmult\
 	$(BIN)/gpmigmdet $(BIN)/gpmimult $(BIN)/gpmigenmult2\
