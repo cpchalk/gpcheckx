@@ -9,8 +9,7 @@ of gpmakefsa (-p option) and the part of gpgeowa which calculates the word
 differences needed to build the correct geodesic word acceptor 
 'filename'.geowa (-geo option). It's aim is to find word differences as efficiently
 as possible so that the resultant word difference file ('file name'.diff2) builds 
-the correct word acceptor ('file name'.wa) and so
-the correct general multiplier ('file name'.gm).
+the correct word acceptor ('file name'.wa).
  It consists of one source file gpcheckx.c.
 
 To build, edit the kbmag src/makefile to include
@@ -20,31 +19,31 @@ the build specification for gpcheckmult as a template.
  In order to run, the presence of the word difference file ('file name'.diff2)
 is required which has been built by the KBMAG binary kbprog. 
 
-gpcheckx adresses the problem of when the the provisional word acceptor, 
+gpcheckx adresses the problem of when the provisional word acceptor
 is simply too large for further orocessing in the kbmag system and 
 proposes two solutions.
 
-1. Truncate the Word Acceptor to a more acceptable size.
+1. Truncate the word acceptor to a more acceptable size.
 
-See the 'Truncating' section.
+See the 'Truncating' section below.
 
 2. Speculatively add so-called diagonal word differences
 to the current word difference set in the hope that the
 word acceptor built from this larger set becomes 'small'. 
 
-See the 'Adding Diagonals' section.
+See the 'Adding Diagonals' section below.
 
 # switches (selection)
 -p 
 
-build a word acceptor that accepts prefixed reduced
+build a word acceptor that accepts prefix reduced
 words, costruct an fsa that recognises 'fellow travellor'
-lhs=rhs equations , derive new lhs=rhs equations from
+lhs=rhs equations, derive new lhs=rhs equations from
 which new word differences can be calculated.
 
 -m
 
-as above, but build a word acceptor that accepts minimally
+as with -p, but instead build a word acceptor that accepts minimally
 reducible words.
 
 -geo 
@@ -54,11 +53,11 @@ word differences
 
 -s N
 
-truncate word acceptor to N states
+truncate the word acceptor to N states
 
 -s 'Base;-Increment'
 
-truncate the word acceptor by Base states but repeat
+truncate the word acceptor to Base states but repeat
 the action and increase the truncation value by Increment
 states at a time until the truncation value is larger
 than the number of states of the word acceptor.
@@ -70,12 +69,12 @@ found.
 
 # Examples of use. 
 
-The file f29 defines 
-the Fibonacci group F(2,9) and can be
-found in the KBMAG test library.
+The file f29 defines the Fibonacci group F(2,9) 
+and can be found in the KBMAG test library.
 
 ./bin/kbprog -v -wd -me 65000 -t 1000 f29
-(creates an initial file f29.diff2)
+
+(create an initial file f29.diff2)
 
 ./bin/gpcheckx -v -p f29 +rptz
 
@@ -83,7 +82,7 @@ found in the KBMAG test library.
 
 ./bin/gpcheckx -v -geo f29 +rptz
 
-( f29.geowa will be correct)
+(f29.geowa will be correct)
 
 The 'difficult' examples 3572 and h93.
 
@@ -146,7 +145,7 @@ h93
 
 Another example of an automatic group which kbmag 
 finds difficult to compute is the Fibonacci group
-F(4,6) defined by the file f46 with contents:-
+F(4,6), defined by 
 
 _RWS := rec(
   isRWS := true,
@@ -159,7 +158,7 @@ _RWS := rec(
  [e\*f\*a\*b,c],[f\*a\*b\*c,d]]
 );
 
-The correct diff2 and wa files can then be
+The correct diff2 and wa files can be
 calculated as follows.
 
 ./bin/kbprog -wd -t 1000 -me 200000 f46
@@ -194,9 +193,8 @@ If two word differences wd1 and wd2 satisfy the equation
 wd2=g1^-1wd1g2, for some generators g1, g2,
 then the word diagwd=g1^-1wd1 is called a diagonal of wd1. 
 
-
 This observation suggests that adding all possible 
-diagonals to a the word difference set in diff2 might 
+diagonals to a the word difference set might 
 result in the correct word acceptor being built.
 
 The options
