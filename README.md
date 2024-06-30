@@ -34,6 +34,39 @@ word acceptor built from this larger set becomes 'small'.
 
 See the 'Adding Diagonals' section.
 
+# switches (selection)
+-p 
+
+build a word acceptor that accepts prefixed reduced
+words, costruct an fsa that recognises 'fellow travellor'
+lhs=rhs equations , derive nee lhs=rhs equations from
+which new word differences can be calculated.
+
+-m
+
+as above, but build a word acceptor that accepts minimally
+reducible words.
+
+-geo 
+
+compute the geodesic word acceptor and extract new 
+word differences
+
+-s N
+
+truncate word acceptor to N states
+
+-s 'Base;-Increment'
+
+truncate the word acceptor by Base states but repeat
+the action and increase the truncation value by Increment
+states at a time until the truncation value is larger
+than the number of states of the word acceptor.
+
++rptz 
+
+repeat the specified until no new word differences are
+found
 
 # Examples of use. 
 
@@ -150,8 +183,8 @@ achieved by specifying the -ve option. For example
 
 If a word acceptor, W, consists of M states, we can 
 truncate it to smaller number, N,  of states by treating 
-all states above N as fail states. We specify this by the 
--s N switch.
+all states with number greater than N as fail states. 
+We specify this by the -s N switch.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
@@ -160,8 +193,7 @@ or almost entirely, of so called 'diagonal' word differences.
 If two word differences wd1 and wd2 satisfy the equation 
 wd2=g1^-1wd1g2, for some generators g1, g2,
 then the word diagwd=g1^-1wd1 is called a diagonal of wd1. 
-So in the word difference fsa there would be a g1,$ transition
-between wd1 and diagwd.
+
 
 This observation suggests that adding all possible 
 diagonals to a the word difference set in diff2 might 
@@ -173,8 +205,8 @@ The options
 
  -diff2name 'diff2suffix'
 
-indicates that diagonals are to be 
-and added to gpname.diff2'diff2suffix', and
+indicates that all possible diagonals are to be 
+added to gpname.diff2'diff2suffix', and
 this enlarged set of word differences is to be used 
 to build the word acceptor and reduce words in
 subsequent processing.
