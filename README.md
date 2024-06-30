@@ -16,11 +16,25 @@ To build, edit the kbmag src/makefile to include
 gpcheckx in the list of binaries to be built, using, for example,
 the build specification for gpcheckmult as a template.  
 
- It requires the presence of the word difference file ('file name'.diff2)
-which has been built by the KBMAG binary kbprog using 
-the -wd option.
+ In order to run, the presence of the word difference file ('file name'.diff2)
+is required which has been built by the KBMAG binary kbprog. 
 
-Example of use. The file f29 defines 
+gpcheckx adresses the problem of when the the provisional word acceptor, 
+built from the initial word differece set is too large for further
+orocessing by the kbmag system and proposes two solutions to this.
+
+1 Truncate the Word Acceptor to a more acceptable size.
+See the 'Truncating' section.
+
+2. Speculatively add so-called diagonal word differences
+to the current word difference set in the hope that the
+word acceptor built from it becomes 'small'. 
+See 'Adding Diagonals' section.
+
+
+#Example of use. 
+
+The file f29 defines 
 the Fibonacci group F(2,9) and can be
 found in the KBMAG test library.
 
@@ -133,6 +147,14 @@ to new geodesic word differences. This is
 achieved by specifying the -ve option. For example
 
 ./bin/gpcheckx -geo -ve f46
+
+# Truncating a large word acceptor
+ A word is defined by the sequence of states of a 
+word acceptor that accepts it. If we let M be the maximum state 
+value from this defining set of states then we can restrict  words 
+by specifying that their maximum state values are no more than a specified value N.
+Specifically, we make a call to,  gpcheckx -s N. The word acceptor
+is truncating by treating all states above N as fail states.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
