@@ -39,7 +39,7 @@ See the 'Adding Diagonals' section.
 
 build a word acceptor that accepts prefixed reduced
 words, costruct an fsa that recognises 'fellow travellor'
-lhs=rhs equations , derive nee lhs=rhs equations from
+lhs=rhs equations , derive new lhs=rhs equations from
 which new word differences can be calculated.
 
 -m
@@ -65,8 +65,8 @@ than the number of states of the word acceptor.
 
 +rptz 
 
-repeat the specified until no new word differences are
-found
+repeat the specified action until no new word differences are
+found.
 
 # Examples of use. 
 
@@ -184,7 +184,7 @@ achieved by specifying the -ve option. For example
 If a word acceptor, W, consists of M states, we can 
 truncate it to smaller number, N,  of states by treating 
 all states with number greater than N as fail states. 
-We specify this by the -s N switch.
+We can specify this by the -s N switch.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
