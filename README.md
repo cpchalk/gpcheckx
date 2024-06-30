@@ -52,12 +52,7 @@ found in the KBMAG test library.
 
 ( f29.geowa will be correct)
 
-The difficult examples 3572 and h93.
-
-The main motivation to write gpcheckx was
-to enable kbmag to compute the automaticity 
-and hyperbolicity of the groups 3572 and h93 within a matter
-of hours rather than days or even weeks!
+The 'difficult' examples 3572 and h93.
 
 These groups are defined by text files 3572, h93 containing
 
