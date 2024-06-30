@@ -32,7 +32,7 @@ word acceptor built from it becomes 'small'.
 See 'Adding Diagonals' section.
 
 
-#Example of use. 
+# Examples of use. 
 
 The file f29 defines 
 the Fibonacci group F(2,9) and can be
@@ -149,12 +149,11 @@ achieved by specifying the -ve option. For example
 ./bin/gpcheckx -geo -ve f46
 
 # Truncating a large word acceptor
- A word is defined by the sequence of states of a 
-word acceptor that accepts it. If we let M be the maximum state 
-value from this defining set of states then we can restrict  words 
-by specifying that their maximum state values are no more than a specified value N.
-Specifically, we make a call to,  gpcheckx -s N. The word acceptor
-is truncating by treating all states above N as fail states.
+
+If a word acceptor, W, consists of M states, we can 
+truncate it to smaller number, N,  of states by treating 
+all states above N as fail states. We specify this by the 
+-s N switch.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
