@@ -163,129 +163,33 @@ then the word diagwd=g1^-1wd1 is called a diagonal of wd1.
 So in the word difference fsa there would be a g1,$ transition
 between wd1 and diagwd.
 
-This observation suggests the following speculative procedure for 
-extracting new word differences . 
+This observation suggests that adding all possible 
+diagonals to a the word difference set in diff2 might 
+result in the correct word acceptor being built.
 
+The options
 
-S0. Run kbprog for a short time to get an initial set
-of word differences contained in the gpname.diff2 file 
-(or diff2). 
+ -diagonals 'diff2suffix'
 
-S1. Calculate all possible diagonal words of diff2 and 
-add these  to make a larger word difference set 
-diff2'.
+ -diff2name 'diff2suffix'
 
-S2. Use a suitable  binary, GPWA, to build the 
-word acceptor, wa1, based on the word diference set diff2.
-Then similarly build the word acceptor, wa2, based on the larger word 
-difference set diff2'.
+indicates that diagonals are to be 
+and added to gpname.diff2'diff2suffix', and
+this enlarged set of word differences is to be used 
+to build the word acceptor and reduce words in
+subsequent processing.
 
-[Please note: It is important that GPWA recogises potentially 
-reducible words by detecting the presence of a 'g,$' trasition between 
-a pair of word differences.
-We assume here that the MAF binary for building a word acceptor,
-maf/bin/gpwa, is available.]
+Example: f29 calculation using diagonals.
 
-S3  'Compare' the word acceptors wa1 and wa2, by 
-performing the fsa operation wa1 ANDNOT wa2 to create the 
-fsa gpname.andnot. This fsa will recognise reducible lhs words 
-which fail to be recognised as such in wa1. These words will be 
-reducible using the word difference set diff2', but not be reducible 
-using the word difference set diff2.
+./bin/kbprog -wd -t 1000 -me 9000 f29
 
-S4. Create a list of lhs words sampled from gpname.andnot.
-For each  lhs in the list, calculate its reduction rhs using diff2', 
-so that lhs=rhs. Then calculate the word differences 
-lhs(i)^-1rhs(i) for i ranging from 1 to the length(lhs)-1 and 
-add any new ones to the word difference set diff2.
+./bin/gpcheckx -diagonals -diff2name diaggoody -waonly f29
 
-Repeat steps S1 to S4 until wa1 and wa2 are equal and, hopefully,
-have a small size.
+'f29.wa now correct'
 
-The aim of this procedure is to produce a word acceptor with 
-a sufficiently small number of states so that it can 
-then be used in the more memory intensive processes shown 
-in the examples in the previous section  (for example calling gpcheckx with 
-the -p option) in order to extract more word differences.
+./bin/gpcheckx -p -diff2name diaggoody -w +rptz
 
-The gpcheckx options -diagonals  and -diff2name 'diff2suffix' are 
-provided to implement steps S1 and S4 of the  above 
-procedure. 
-The option '-diagonals' indicates that diagonals are to be calculated
-and added to gpname.diff2'diff2suffix'.
-
-Example: 3572 calculation using diagonals.
-
-./bin/kbprog -wd -t -me 50000 3572
-
-then repeatedly execute the cycle defined by the 
-following script (comments contained in '').  
-
-'calculate 3572.wa1 using 3572.diff2'
-
-./bin/gpcheckx -execwa './gpwa 3572 >mfile' -waonly  -v  3572
-
-cp 3572.wa 3572.wa1
-
-'calculate all the diagonals of 3572.diff2 to make the 
-larger word difference file, 3572.diff2diaggoody'
-
-./bin/gpcheckx -diagonals  -diff2name diaggoody -w  -v  3572
-
-'calculate 3572.wa2 based on 3572.diff2diaggoody 
-
-
-cp 3572.diff2diaggoody 3572.diff2d
-
-./gpwa 3572 >mfile
-
-rm 3572.diff2d
-
-cp 3572.wa 3572.wa2
-
-'calculate 3752.andnot'   
-
- maf/bin/fsaandnot 3572.wa1 3572.wa2 3572.andnot >mfile2
-
-'extract new word differences from the reducible lhs words in 3572.andnot.' 
-'Create the lhs=rhs equations using 3572.wa1 and 3572.diff2diagody as the' 
-'current word acceptor and word difference set respectively '
-
-./bin/gpcheckx -t -to 500 -diff2name diaggoody -v 3572
-
-where 'gpwa' is a script which invokes the MAF gpwa
-
-if test -f $1.diff2d; then
-
-	cp $1.diff2d $1.diff1c
-
-else
-
-	cp $1.diff2 $1.diff1c
-
-fi
-
-maf/bin/gpwa $1
-
-cp $1.pwa $1.wa
+'f29.diff2 now correct'
 
 
 
-Results: 
-After 11 cycles of comparing pairs of large word acceptors, 
-each with 230000+ plus states, a 'small' word acceptor 
-with 47611 states is built.
-The 'build and check multiplier' type process
-
-./bin/gpcheckx -p -v -w 3572 
-
-uses this word acceptor to then extract more word differences 
-to add to diff2. 
-But a word acceptor built with these extra word differences 
-is again large with 220000+ states.
-So we resume the cycle of adding diagonals to the diff2
-word difference set and compare word acceptors to 
-try and build a smaller word acceptor again. 
-This time the process soon finishes with the building 
-of a 'small' word acceptor of 47613 states which, this time,  
-happens to be the correct word acceptor.
