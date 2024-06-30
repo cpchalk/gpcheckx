@@ -17,7 +17,7 @@ gpcheckx in the list of binaries to be built, using, for example,
 the build specification for gpcheckmult as a template.  
 
  In order to run, the presence of the word difference file ('file name'.diff2)
-is required which has been built by the KBMAG binary kbprog. 
+is required which has been built by the kbmag binary kbprog. 
 
 gpcheckx adresses the problem of when the provisional word acceptor
 is simply too large for further orocessing in the kbmag system and 
