@@ -1,4 +1,5 @@
 # gpcheckx
+
 kbmag program to find word differences quickly using ideas from MAF (https://sourceforge.net/projects/maffsa/).
 
 gpcheckx is a binary that extends the set of binaries making up the kbmag system 
@@ -20,16 +21,18 @@ the build specification for gpcheckmult as a template.
 is required which has been built by the KBMAG binary kbprog. 
 
 gpcheckx adresses the problem of when the the provisional word acceptor, 
-built from the initial word differece set is too large for further
-orocessing by the kbmag system and proposes two solutions to this.
+is simply too large for further orocessing in the kbmag system and 
+proposes two solutions.
 
-1 Truncate the Word Acceptor to a more acceptable size.
+1. Truncate the Word Acceptor to a more acceptable size.
+
 See the 'Truncating' section.
 
 2. Speculatively add so-called diagonal word differences
 to the current word difference set in the hope that the
-word acceptor built from it becomes 'small'. 
-See 'Adding Diagonals' section.
+word acceptor built from this larger set becomes 'small'. 
+
+See the 'Adding Diagonals' section.
 
 
 # Examples of use. 
