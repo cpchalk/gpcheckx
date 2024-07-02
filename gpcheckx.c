@@ -3309,7 +3309,8 @@ void do_andnot (fsafile1,fsafile2,gp)
                 // convert fail state to accepting state
                 fsa2 = fsa_pfxred(fsa2,op_store,tempfilename);
 
-            fsaandnot = fsa_and_not(fsa1,fsa2,op_store,TRUE,tempfilename);
+            fsaandnot = fsa_and_not_first(fsa2,fsa1,op_store,TRUE,tempfilename,0);
+            //fsaandnot = fsa_and_not(fsa1,fsa2,op_store,TRUE,tempfilename);
             printf("writing %s, states=%d\n",filename,fsaandnot->states->size);
             wfile = fopen(filename,"w");
             fsa_print(wfile,fsaandnot,fsaname);
@@ -5981,10 +5982,9 @@ fsa * fsa_wa_xx (fsaptr,diff2, rs_wd2, op_table_type,wastr,new_diff2,inv,inf2,rs
 /* attempt to calculate missing wds from a smaller subset of a larger set of wd's 
    by shadowing the building of the wa based on this larger set of word differences.
    For example, the larger set could be obtained by adding diagonals to the smaller set. 
-   Only some of the missing wd's are found because many lhs's are hidden by the 
-			folding nature of state transitions during the building of 
-			the larger set's wa when a larger state number    
-   transitions back to a smaller state number. In other words - this is even worse than gpmakefsa
+   Only some of the missing wd's are found because 
+   many lhs's are hidden by the folding nature of during the building of a larger state    
+   transitions back to a smaller state. In other words - this is even worse than gpmakefsa
    in finding new wds! Its no short cut to producing the wa built from the larger set and
    doing an andnot with the smaller set. */
 { int  ***dtable, ne, ngens, ndiff, ns,  nt, cstate, cs, csdiff, csi,
