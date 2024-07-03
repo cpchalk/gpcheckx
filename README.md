@@ -225,14 +225,14 @@ Example: f29 calculation using diagonals.
 
 Script 1 Add diagonals to to a set of word differences,
 store this larger set in gpname.diff2diaggood and build
-a word acceptor based on this which is stored in gpname.wa1.
+a word acceptor based on this which is stored in gpname.wa2.
 
 ./bin/gpcheckx  -diagonals  -diff2name diaggood -waonly  -v  $1;
 
 cp $1.wa $1.wa2
 
 Script 2. Compute the word acceptor based on 
-gpname.diff2, place this in gpname.wa2, then extract 
+gpname.diff2, place this in gpname.wa1, then extract 
 word differences from the differences found between the
 word acceptors gpname.wa1 and gpname.wa2.
 
@@ -247,5 +247,8 @@ cp $1.wa2 $1.wa
 ./bin/gpcheckx -t -to 400 -diff2name diaggood -v $1
 
 
+so a cycle of gathering word differences might involve
+repeating the process of firstly running script1 followed by
+ running script2 one or more times.
 
 
