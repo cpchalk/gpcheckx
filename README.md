@@ -1,4 +1,4 @@
-hi# gpcheckx
+# gpcheckx
 
 A kbmag program used to efficiently find the word differences  needed to 
 build the correct automatic structure of a group gpname. 
@@ -51,7 +51,7 @@ finishes with no new word differences being discovered.
 
 In this case, the file gpname.diff2 is deemed correct.
 
-# switches (selection)
+# Switches (selection)
 -p 
 
 build a word acceptor that accepts prefix reduced
