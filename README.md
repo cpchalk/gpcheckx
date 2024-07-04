@@ -41,7 +41,9 @@ word acceptor built from this larger set becomes 'small'.
 
 See the 'Adding Diagonals' section below.
 
-gpcheckx finishes with success if running
+gpcheckx is run iteratively using the accumulated
+information from previous runs. It finally finishes 
+with success if the process
 
 gpcheckx -p -v gpname 
 
