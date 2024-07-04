@@ -1,6 +1,6 @@
 # gpcheckx
 
-kbmag program used to efficiently find the word differences  needed to 
+A kbmag program used to efficiently find the word differences  needed to 
 build the correct automatic structure of a group gpname. 
 It uses some ideas from the MAF system for building automatic structures. 
 For background material and concepts, see  
