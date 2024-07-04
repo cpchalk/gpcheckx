@@ -3,7 +3,7 @@
 kbmag program to find word differences quickly using ideas from MAF (https://sourceforge.net/projects/maffsa/).
 
 gpcheckx is a binary that extends the set of binaries making up the kbmag system 
-from Derek Holt at the University of Warwick. 
+authored by Derek Holt at the University of Warwick. 
 It provides the equivalent functionality of the gpcheckmult component
 of gpmakefsa (-p option) and the part of gpgeowa which calculates the word 
 differences needed to build the correct geodesic word acceptor 
@@ -20,7 +20,7 @@ the build specification for gpcheckmult as a template.
 is required which has been built by the kbmag binary kbprog. 
 
 gpcheckx adresses the problem of when the provisional word acceptor
-is simply too large for further orocessing in the kbmag system and 
+is simply too large for further processing in the kbmag system and 
 proposes two solutions.
 
 1. Truncate the word acceptor to a more acceptable size.
@@ -188,7 +188,7 @@ achieved by specifying the -ve option. For example
 If a word acceptor, W, consists of M states, we can 
 truncate it to smaller number, N,  of states by treating 
 all states with number greater than N as fail states. 
-We can specify this by the -s N switch.
+We specify this by the -s N switch.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
