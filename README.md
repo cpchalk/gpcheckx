@@ -55,7 +55,7 @@ In this case, the file gpname.diff2 is deemed correct.
 -p 
 
 build a word acceptor that accepts prefix reduced
-words, costruct an fsa that recognises 'fellow travellor'
+words, construct an fsa that recognises 'fellow travellor'
 lhs=rhs equations, derive new lhs=rhs equations from
 which new word differences can be calculated.
 
