@@ -33,6 +33,14 @@ word acceptor built from this larger set becomes 'small'.
 
 See the 'Adding Diagonals' section below.
 
+gpcheckx finishes with success if 
+
+gpcheckx -p -v gpname 
+
+finishes with no new word differences being discovered.
+
+In this case, the file gpname.diff2 is deemed correct.
+
 # switches (selection)
 -p 
 
