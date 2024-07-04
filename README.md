@@ -1,22 +1,27 @@
 # gpcheckx
 
-kbmag program to find word differences quickly using ideas from MAF (https://sourceforge.net/projects/maffsa/).
+kbmag program to efficiently find the word differences  needed to 
+build the correct automatic structure of a group gpname. 
+It uses some ideas from the MAF system for building automatic structures. 
+See https://sourceforge.net/projects/maffsa.
 
-gpcheckx is a binary that extends the set of binaries making up the kbmag system 
+gpcheckx extends the set of binaries making up the kbmag system 
 authored by Derek Holt at the University of Warwick. 
 It provides the equivalent functionality of the gpcheckmult component
-of gpmakefsa (-p option) and the part of gpgeowa which calculates the word 
-differences needed to build the correct geodesic word acceptor 
-'filename'.geowa (-geo option). It's aim is to find word differences as efficiently
-as possible so that the resultant word difference file ('file name'.diff2) builds 
-the correct word acceptor ('file name'.wa).
- It consists of one source file gpcheckx.c.
+of gpmakefsa (-p option) and the part of gpgeowa which calculates the 
+word differences needed to build the correct geodesic word acceptor 
+gpname.geowa (-geo option). It's aim is to find word 
+differences efficiently so that the resultant word difference file 
+(gpname.diff2) can be used to build the correct word acceptor (gpname.wa) 
+and correct general multiplier (gpname.gm).
+
+It consists of one source file gpcheckx.c.
 
 To build, edit the kbmag src/makefile to include
 gpcheckx in the list of binaries to be built, using, for example,
 the build specification for gpcheckmult as a template.  
 
- In order to run, the presence of the word difference file ('file name'.diff2)
+In order to run, the presence of the word difference file (gpname.diff2)
 is required which has been built by the kbmag binary kbprog. 
 
 gpcheckx adresses the problem of when the provisional word acceptor
