@@ -1,4 +1,4 @@
-# gpcheckx
+hi# gpcheckx
 
 A kbmag program used to efficiently find the word differences  needed to 
 build the correct automatic structure of a group gpname. 
@@ -274,7 +274,7 @@ so a cycle of gathering word differences might involve
 repeating the process of firstly running script1 followed by
  running script2 one or more times.
 
-# minimising time and memory
+# Minimising time and memory
 
 The gpcheckx operation can be divided into three parts:-
 
