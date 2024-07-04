@@ -67,6 +67,11 @@ than the number of states of the word acceptor.
 repeat the specified action until no new word differences are
 found.
 
+-to S
+
+timout scanning process after S seconds, see the 
+'minimising time and memory' section.
+
 # Examples of use. 
 
 The file f29 defines the Fibonacci group F(2,9) 
@@ -251,4 +256,32 @@ so a cycle of gathering word differences might involve
 repeating the process of firstly running script1 followed by
  running script2 one or more times.
 
+# mimimizing time and memory
 
+The gpcheckx operation can be divided into three parts:-
+
+building word acceptor
+
+scanning list of lhs words for new word differences
+
+building 'triples' fsa recognising fellow travelling
+lhs=rhs equations
+
+There is no means to reduce the time and memory reqirements
+to build a word acceptor. The only solution to not
+being able to build a word acceptor from a given diff2
+file is to either have more patience or use a computer
+with more memory.
+
+The -to S option stops the scanning process after S seconds.
+In addition, a SINGLE Control & C from the keypad will also cause
+the scanning process to stop.
+
+For a given N, the '-m -s N' options does the 'triple building'
+part with smallest memory requirement. The smaller N, 
+the smaller the processing time and memory requirements.
+But if N is too small then no new word differences will be found.
+
+The options '-p -s N' require more time and memory.
+The option '-p' with no -s option requires the most
+time and memory of all.
