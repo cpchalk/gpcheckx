@@ -260,26 +260,25 @@ repeating the process of firstly running script1 followed by
 
 The gpcheckx operation can be divided into three parts:-
 
-building word acceptor
+building a word acceptor
 
-scanning list of lhs words for new word differences
+scanning lists of lhs words for new word differences
 
 building 'triples' fsa recognising fellow travelling
 lhs=rhs equations
 
-There is no means to reduce the time and memory reqirements
-to build a word acceptor. The only solution to not
-being able to build a word acceptor from a given diff2
-file is to either have more patience or use a computer
+There is currently no ability to reduce the time and 
+memory reqirements to build a word acceptor. The only solution 
+to this is to either have more patience or use a computer
 with more memory.
 
 The -to S option stops the scanning process after S seconds.
 In addition, a SINGLE Control & C from the keypad will also cause
 the scanning process to stop.
 
-For a given N, the '-m -s N' options does the 'triple building'
-part with smallest memory requirement. The smaller N, 
-the smaller the processing time and memory requirements.
+For a given N, the '-m -s N' option does the 'triple building'
+part with the smallest memory requirement. The smaller N is, 
+the smaller the processing time and memory requirements will be.
 But if N is too small then no new word differences will be found.
 
 The options '-p -s N' require more time and memory.
