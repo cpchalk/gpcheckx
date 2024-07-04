@@ -274,7 +274,7 @@ so a cycle of gathering word differences might involve
 repeating the process of firstly running script1 followed by
  running script2 one or more times.
 
-# mimimizing time and memory
+# minimising time and memory
 
 The gpcheckx operation can be divided into three parts:-
 
