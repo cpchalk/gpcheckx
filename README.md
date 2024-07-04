@@ -33,7 +33,7 @@ word acceptor built from this larger set becomes 'small'.
 
 See the 'Adding Diagonals' section below.
 
-gpcheckx finishes with success if 
+gpcheckx finishes with success if running
 
 gpcheckx -p -v gpname 
 
