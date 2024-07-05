@@ -90,6 +90,9 @@ found.
 timout scanning process after S seconds, see the 
 'minimising time and memory' section.
 
+-v verbose mode
+
+
 # Examples of use. 
 
 The file f29 defines the Fibonacci group F(2,9) 
@@ -244,17 +247,19 @@ Example: f29 calculation using diagonals.
 
 'f29.diff2 now correct'
 
-# Diagonal Script Examples
+# The 'Add Diagonals' Script. Another way of calculating f46.
 
-Script 1 Add diagonals to to a set of word differences,
+This script has two parts.
+
+Part 1 Add diagonals to the current set of word differences,
 store this larger set in gpname.diff2diaggood and build
-a word acceptor based on this which is stored in gpname.wa2.
+a word acceptor based on this which is then stored in gpname.wa2.
 
 ./bin/gpcheckx  -diagonals  -diff2name diaggood -waonly  -v  $1;
 
 cp $1.wa $1.wa2
 
-Script 2. Compute the word acceptor based on 
+Part 2. Compute the word acceptor based on 
 gpname.diff2, place this in gpname.wa1, then extract 
 word differences from the differences found between the
 word acceptors gpname.wa1 and gpname.wa2.
@@ -269,10 +274,21 @@ cp $1.wa2 $1.wa
 
 ./bin/gpcheckx -t -to 400 -diff2name diaggood -v $1
 
+f46 can now also be calculated as follows:-
 
-so a cycle of gathering word differences might involve
-repeating the process of firstly running script1 followed by
- running script2 one or more times.
+./bin/kbprog -wd -t 1000 -me 60000 f46
+
+Run the 'add diagonals' script THREE times
+
+./bin/gpcheckx -v -w -diff2name diaggood -m -s 60000 f46
+
+./bin/gpcheckx -v -w -diff2name diaggood -m -s 80000 f46
+
+./bin/gpcheckx -v -m f46
+
+./bin/gpcheckx -v -p f46 +rptz
+
+f46.diff2 and f46.wa will now be correct.
 
 # Minimising time and memory
 
