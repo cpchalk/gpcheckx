@@ -171,7 +171,7 @@ h93
 
 Another example of an automatic group which kbmag 
 finds difficult to compute is the Fibonacci group
-F(4,6), defined by 
+F(4,6), defined by the file f46 containing
 
 _RWS := rec(
   isRWS := true,
