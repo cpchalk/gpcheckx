@@ -322,6 +322,5 @@ The options '-p -s N' require more time and memory.
 The option '-p' with no -s option requires the most
 time and memory of all.
 
-With the exception of the h93 calculation, the examples,  
-given here run with 2 GB of available memory and should
-each take less than 4 hours to run on an average laptop.
+With the exception of the h93 calculation, the examples 
+given here will run with 2 GB of available memory.
