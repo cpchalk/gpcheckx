@@ -39,7 +39,7 @@ See the 'Truncating' section below.
 to the current word difference set in the hope that the
 word acceptor built from this larger set becomes 'small'. 
 
-See the 'Adding Diagonals' section below.
+See the 'Using diagonals' section below.
 
 gpcheckx is run iteratively using the accumulated
 information from previous runs. It finally finishes 
