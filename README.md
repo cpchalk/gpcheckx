@@ -1,7 +1,7 @@
 # gpcheckx
 
-A kbmag program used to efficiently find the word differences  needed to 
-build the correct automatic structure of a group gpname. 
+A kbmag program that can be used to efficiently find the word differences  
+needed to build the correct automatic structure of a group gpname. 
 It uses some ideas from the MAF system for building automatic structures. 
 For background material and concepts, see  
 
@@ -193,6 +193,9 @@ calculated as follows.
 
 ./bin/gpcheckx -v -p f46 +rptz
 
+See the 'Adding diagonals' section for a quicker way to do this
+calculation.
+
 # Proving Non-hyperbolicity.
 
 If we suspect that a group is not hyperbolic (for example the group
@@ -247,7 +250,7 @@ Example: f29 calculation using diagonals.
 
 'f29.diff2 now correct'
 
-# The 'Add Diagonals' Script. Another way of calculating f46.
+# The 'Add Diagonals' Script. Another way of calculating F(4,6).
 
 This script has two parts.
 
@@ -274,7 +277,7 @@ cp $1.wa2 $1.wa
 
 ./bin/gpcheckx -t -to 400 -diff2name diaggood -v $1
 
-f46 can now also be calculated using the following 'recipe':-
+F(4,6) can now also be calculated using the following 'recipe':-
 
 ./bin/kbprog -wd -t 1000 -me 60000 f46
 
@@ -319,6 +322,6 @@ The options '-p -s N' require more time and memory.
 The option '-p' with no -s option requires the most
 time and memory of all.
 
-All the examples given here run with 1.5 GB of 
+All of the examples given here run with 1.5 GB of 
 available memory and mostly have processing times of 
 less than 3 or 4 hours on an average laptop.
