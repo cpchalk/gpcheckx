@@ -274,47 +274,51 @@ cp $1.wa2 $1.wa
 
 ./bin/gpcheckx -t -to 400 -diff2name diaggood -v $1
 
-f46 can now also be calculated as follows:-
+f46 can now also be calculated using the following 'recipe':-
 
 ./bin/kbprog -wd -t 1000 -me 60000 f46
 
-Run the 'add diagonals' script THREE times
+Run parts 1 and 2 of the 'add diagonals' script 3 times.
 
-./bin/gpcheckx -v -w -diff2name diaggood -m -s 60000 f46
+Run part 2 only of the 'add diagonals' script 2 times, then do
 
 ./bin/gpcheckx -v -w -diff2name diaggood -m -s 80000 f46
 
-./bin/gpcheckx -v -m f46
+./bin/gpcheckx -v -m f46 +rptz
 
 ./bin/gpcheckx -v -p f46 +rptz
 
 f46.diff2 and f46.wa will now be correct.
 
-# Minimising time and memory
+# Minimising time and memory requirements
 
-The gpcheckx operation can be divided into three parts:-
+The gpcheckx operation can be divided into three 'costly' parts:-
 
 building a word acceptor
 
 scanning lists of lhs words for new word differences
 
-building 'triples' fsa recognising fellow travelling
-lhs=rhs equations
+building a 'triples' fsa to recognise fellow travelling
+lhs=rhs equations and calculate new ones.
 
 There is currently no ability to reduce the time and 
 memory reqirements to build a word acceptor. The only solution 
-to this is to either have more patience or use a computer
-with more memory.
+to improve this is to either have more patience or use a faster 
+computer with more memory.
 
-The -to S option stops the scanning process after S seconds.
+The -to S option stops the scanning lists process after S seconds.
 In addition, a SINGLE Control & C from the keypad will also cause
 the scanning process to stop.
 
-For a given N, the '-m -s N' option does the 'triple building'
-part with the smallest memory requirement. The smaller N is, 
+For a given N, the '-m -s N' option does the  building a 'triples'
+part with the least memory/processing time requirement. The smaller N is, 
 the smaller the processing time and memory requirements will be.
 But if N is too small then no new word differences will be found.
 
 The options '-p -s N' require more time and memory.
 The option '-p' with no -s option requires the most
 time and memory of all.
+
+All the examples given here run with 1.5 GB of 
+available memory and mostly have processing times of 
+less than 3 or 4 hours on an average laptop.
