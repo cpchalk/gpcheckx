@@ -193,7 +193,7 @@ calculated as follows.
 
 ./bin/gpcheckx -v -p f46 +rptz
 
-See the 'Adding diagonals' section for a quicker way to do this
+See the 'Add diagonals' section for a quicker way to do this
 calculation.
 
 # Proving Non-hyperbolicity.
