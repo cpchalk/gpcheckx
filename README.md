@@ -90,6 +90,8 @@ found.
 timout scanning process after S seconds, see the 
 'minimising time and memory' section.
 
+-w read the current word acceptor, don't build a new one.
+
 -v verbose mode
 
 
