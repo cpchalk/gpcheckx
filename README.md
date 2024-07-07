@@ -7,9 +7,12 @@ For background material and concepts, see
 
 https://maffsa.sourceforge.net/manpages/background.html
 
-
 gpcheckx extends the set of binaries making up the kbmag system 
-authored by Derek Holt at the University of Warwick. 
+authored by Derek Holt at the University of Warwick. See
+
+https://github.com/gap-packages/kbmag/tree/master/standalone
+
+
 It provides the equivalent functionality of the gpcheckmult component
 of gpmakefsa (-p option) and the part of gpgeowa which calculates the 
 word differences needed to build the correct geodesic word acceptor 
@@ -102,7 +105,7 @@ verbose mode, display progress messages etc.
 # Examples of use. 
 
 The file f29 defines the Fibonacci group F(2,9) 
-and can be found in the KBMAG test library.
+and can be found in the kbmag folder ag_data.
 
 ./bin/kbprog -v -wd -me 65000 -t 1000 f29
 
