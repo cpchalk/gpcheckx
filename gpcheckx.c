@@ -45,19 +45,19 @@ extern int (*reduce_word)();
 
 static FILE *rfile, *wfile;
 
-void fsa_print ();
-int  fsa_minimize ();
+//void fsa_print ();
+//int  fsa_minimize ();
 fsa * fsa_genmult2_int_x();
-int genstrlen ();
-void genstrcpy ();
-int genstrcmp ();
-void fsa_clear_rws ();
-void fsa_set_is_accessible ();
-void srec_clear ();
-void fsa_table_init ();
-int hash_rec_len ();
+//int genstrlen ();
+//void genstrcpy ();
+//int genstrcmp ();
+//void fsa_clear_rws ();
+//void fsa_set_is_accessible ();
+//void srec_clear ();
+//void fsa_table_init ();
+//int hash_rec_len ();
 void  interrupt_gpcheckx();
-fsa  *fsa_diff();
+//fsa  *fsa_diff();
 fsa *fsa_pfxred();
 int process_words();
 void  badusage_gpcheckx();
@@ -76,42 +76,42 @@ int fsa_minimize_big_hash();
 int get_image_big_hash();
 int get_image2_big_hash();
 fsa *fsa_minred1 ();
-fsa *fsa_minred ();
+//fsa *fsa_minred ();
 fsa *fsa_beginswith ();
 int  diff_reducex();
 /* Functions used in this file and defined elsewhere */
-int sparse_target();
-void fsa_init();
-int  fsa_table_dptr_init();
-void fsa_set_is_accepting();
-void srec_copy();
-boolean  srec_equal();
-void fsa_clear();
-void compressed_transitions_read();
-int  hash_locate();
-int* hash_rec();
-void hash_init();
-void hash_clear();
-int  diff_reduce();
+//int sparse_target();
+//void fsa_init();
+//int  fsa_table_dptr_init();
+//void fsa_set_is_accepting();
+//void srec_copy();
+//boolean  srec_equal();
+//void fsa_clear();
+//void compressed_transitions_read();
+//int  hash_locate();
+//int* hash_rec();
+//void hash_init();
+//void hash_clear();
+//int  diff_reduce();
 int  calculate_inverses();
-int stringlen();
-void  fsa_read();
-void  fsa_copy();
-int   add_wd_fsa();
-int  make_full_wd_fsa();
+//int stringlen();
+//void  fsa_read();
+//void  fsa_copy();
+//int   add_wd_fsa();
+//int  make_full_wd_fsa();
 int  make_full_wd_fsax();
 int add_diagonals_to_wd_fsa();
 fsa *fsa_wa_x(); 
 fsa *fsa_wa_xx(); 
 //fsa  *fsa_minred();
-fsa  *fsa_minkb();
-fsa  *fsa_geopairs();
-fsa  *fsa_exists();
-fsa  *fsa_and();
-fsa  *fsa_and_not();
+//fsa  *fsa_minkb();
+//fsa  *fsa_geopairs();
+//fsa  *fsa_exists();
+//fsa  *fsa_and();
+//fsa  *fsa_and_not();
 fsa  *fsa_and_not_first();
 fsa  *fsa_binop_x();
-fsa  *fsa_not ();
+//fsa  *fsa_not ();
 int verify_word ();
 void free_fsa ();
 int main1 ();
@@ -549,6 +549,8 @@ int main2(argc, argv, read_last_wa,wa_size)
   char *bwqual1;
   boolean diff2name_command = FALSE;
   char *diff2namestr;
+  boolean hashlimit_command = FALSE;
+  int hashlimit=0;
   boolean usewa_command = FALSE;
   char *usewastr;
   boolean exwa_command = FALSE;
@@ -665,6 +667,17 @@ int main2(argc, argv, read_last_wa,wa_size)
 	dump_files=TRUE;
     else if (strcmp(argv[arg],"-prefixby1")==0)
    	 prefixby1=TRUE;
+    else if (strcmp(argv[arg],"-hashlimit")==0)
+    {
+		arg+=1;
+      	if (arg >= argc)
+      	{
+		printf("-hashlimit should be followed by an integer \n");
+        	badusage_gpcheckx(FALSE);
+      	}
+	hashlimit_command=TRUE;
+       hashlimit=atoi(argv[arg]);
+    }
     else if (strcmp(argv[arg],"-diff2name")==0)
     {
 		arg+=1;
@@ -966,7 +979,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 		exit(0);
 	}
 	else {
-        	Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname);
+        	Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname,hashlimit);
       		gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE);
 	}
     	free_fsa(diag_diff2);
@@ -981,7 +994,7 @@ int main2(argc, argv, read_last_wa,wa_size)
       		//	gpwa=fsa_wa_xx(diff2,op_store,tempfilename,FALSE,usewastr);
 	}
 	else
-      		gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
+      		gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE,hashlimit);
       }
       if (kbm_print_level>1)
         printf("  #Number of states of gpwa before minimisation = %d.\n",
@@ -1053,7 +1066,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   }
   else {
 	Printf("calling fsa_wa_x on %s.diff2 (geo option)\n",gpname);
-	geowa=fsa_wa_x(diff2,DENSE,tempfilename,TRUE);
+	geowa=fsa_wa_x(diff2,DENSE,tempfilename,TRUE,0);
         if (kbm_print_level>1)
                 printf(
                 "  #Number of states of geowa before minimisation = %d.\n",
@@ -1239,7 +1252,7 @@ else {
   }
   else {
 		printf("creating geowa on diff2");
-		geowa=fsa_wa_x(diff2,DENSE,tempfilename,TRUE);
+		geowa=fsa_wa_x(diff2,DENSE,tempfilename,TRUE,0);
         if (kbm_print_level>1)
                 printf(
                 "  #Number of states of geowa before minimisation = %d.\n",
@@ -1825,6 +1838,7 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
   boolean  *succeeding,*accepting_states, *duplicates, *statesdone; 
   gen null_char = 0x0;
   int count_dots=0;
+  boolean first_time_display=TRUE;
   
   if (fsaptr->num_initial==0)
   {
@@ -2233,10 +2247,14 @@ else
 		{
 			// need a better diff_reduce!
 			//PPrintf("*!");
-                  display_eqn(si,lhs_word,rhs_word,
+		  if (first_time_display) {
+                  	display_eqn(si,lhs_word,rhs_word,
 				diff2->alphabet->base->names);
-			break;
+			first_time_display=FALSE;
+                  }
+			//break;
 			continue;
+			
 		}
 		
 	  }
@@ -3921,22 +3939,28 @@ fsa * fsa_beginswith(waptr,beginstring)
 // MAF originated  simplification of fsa_wa which causes smaller intermediate
 // wa files to be created. For further detail see kbmag/lib/fsawa.c and
 // maf/mafauto.cpp from line 274 
-fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
+fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
 	fsa *fsaptr;
 	storage_type op_table_type;
 	char *tempfilename;
 	boolean geodesic;
+	int hashlimit;
 { int  ***dtable, ne, ngens, ndiff, ns, *fsarow, nt, cstate, cs, csdiff, csi,
        im, i, k, g1, g2, len, identity;
-  int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
+  unsigned short int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
   boolean dense_op, no_trans, good;
   char *cf;
-  hash_table ht;
+  short_hash_table ht;
   fsa *wa;
   FILE *tempfile, *fopen();
   int SEEN_LHS_BETTER = 1;
   int SEEN_RHS_BETTER = 2;
   int SEEN_EQUAL = 3;
+
+//void short_hash_init();
+//int short_hash_locate();
+//void short_hash_clear();
+//unsigned short* short_hash_rec();
 
   if (!fsaptr->flags[DFA]){
     fprintf(stderr,"Error: fsa_wa only applies to DFA's.\n");
@@ -3992,10 +4016,10 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
   wa->table->denserows = 0;
   wa->table->printing_format = op_table_type;
   
-  hash_init(&ht,FALSE,0,0,0);
+  short_hash_init(&ht,FALSE,0,0,0);
   ht_ptr = ht.current_ptr;
   ht_ptr[0] = identity;
-  im = hash_locate(&ht,1);
+  im = short_hash_locate(&ht,1);
   if (im== -1) return 0;
   if (im!=1) {
     fprintf(stderr,"Hash-initialisation problem in fsa_wa.\n");
@@ -4016,15 +4040,18 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
   nt = 0; /* Number of transitions in exists */
   tmalloc(cf,char,ndiff+1);
   int dollarcount=0;
-
+  int total_hashx=sizeof(short int);
   while (++cstate <= ht.num_recs) {
     if (kbm_print_level>=3) {
       if ((cstate<=1000 && cstate%100==0)||(cstate<=10000 && cstate%1000==0)||
           (cstate<=100000 && cstate%5000==0) || cstate%50000==0)
        printf("    #cstate = %d;  number of states = %d.\n",cstate,ht.num_recs);
-    }
-    cs_ptr = hash_rec(&ht,cstate);
-    cs_ptre = hash_rec(&ht,cstate) + hash_rec_len(&ht,cstate) - 1;
+    } 
+    if (hashlimit > 0)
+     if ( (cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
+       Printf("    #cstate = %d;  number of states = %d, hash space size =%d\n",cstate,ht.num_recs,total_hashx);
+    cs_ptr = short_hash_rec(&ht,cstate);
+    cs_ptre = short_hash_rec(&ht,cstate) + short_hash_rec_len(&ht,cstate) - 1;
     if (!dense_op)
       len = 0;
     for (g1=1;g1<=ngens;g1++) {
@@ -4036,6 +4063,7 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
  * accepted by *fsaptr, we also have to apply (g1,g2) to the initial state
  * of *fsaptr.
  */
+      int local_hashx=0;
       for (i=1;i<=ndiff;i++)
         cf[i] = 0;
       ptr = cs_ptr-1;
@@ -4143,6 +4171,9 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
       ht_ptre = ht_ptrb-1;
       for (i=1;i<=ndiff;i++) {
         k = cf[i];
+        if (k>0) {
+                local_hashx++;
+        }
 	if (TRACE5 && cstate < 80 && cf[i])
 		printf(" %d-%d\n",i,cf[i]);
         if (k==SEEN_LHS_BETTER)
@@ -4152,7 +4183,7 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
         else if (k==SEEN_EQUAL)
           *(++ht_ptre) = ndiff+ndiff+i;
       }
-      im = hash_locate(&ht,ht_ptre-ht_ptrb+1);
+      im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
       if (im== -1) return 0;
 	if (TRACE5 && cstate<80) printf("%d->%d\n",g1,im);
       if (dense_op)
@@ -4161,8 +4192,19 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
          fsarow[++len] = g1;
          fsarow[++len] = im;
       }
-      if (im>0)
+      if (im>0) {
         nt++;
+        if (im==ht.num_recs) {
+        if (hashlimit && total_hashx>hashlimit) {
+                        //printf("too big - Im going to !\n");
+                        ht.num_recs--;
+                        im=cstate;
+                }
+                else {
+                        total_hashx+=(local_hashx*sizeof(short int));
+                }
+        }
+	}
     }
     if (!dense_op)
       fsarow[0] = len++;
@@ -4170,7 +4212,7 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic)
   }
   fclose(tempfile);
 
-  hash_clear(&ht);
+  short_hash_clear(&ht);
   tfree(fsarow);
   tfree(cf);
   if (WADIAG)
@@ -5989,13 +6031,13 @@ fsa * fsa_wa_xx (fsaptr,diff2, rs_wd2, op_table_type,wastr,new_diff2,inv,inf2,rs
    doing an andnot with the smaller set. */
 { int  ***dtable, ne, ngens, ndiff, ns,  nt, cstate, cs, csdiff, csi,
        im, i, k, g1, g2, len, identity;
-  int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
+ unsigned short int *ht_ptr, *ht_ptr_save, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
   boolean dense_op, no_trans, no_trans_by_wa,good;
   char *cf;
   int *wa1states;
   int *historys;
   int *historyl;
-  hash_table ht;
+  short_hash_table ht;
   fsa *wa;
   fsa *gpwa;
   int **watable;
@@ -6005,8 +6047,15 @@ fsa * fsa_wa_xx (fsaptr,diff2, rs_wd2, op_table_type,wastr,new_diff2,inv,inf2,rs
   int SEEN_RHS_BETTER = 2;
   int SEEN_EQUAL = 3;
   unsigned int	total_elements=0;
+  unsigned int tot_space_save;
+  unsigned int block_space_save;
 
-Printf("fsa_wa_xx!!\n");
+//void short_hash_init();
+//int short_hash_locate();
+//void short_hash_clear();
+//unsigned short* short_hash_rec();
+
+Printf("fsa_wa_xx sizeofint is %d, sizeofshortint is %d !!\n",sizeof(int),sizeof(short int));
     if ((rfile = fopen(wastr,"r")) == 0) {
         fprintf(stderr,"Cannot open file %s.\n",wastr);
         exit(1);
@@ -6071,10 +6120,10 @@ Printf("fsa_wa_xx!!\n");
   wa->table->denserows = 0;
   wa->table->printing_format = op_table_type;
   
-  hash_init(&ht,FALSE,0,0,0);
+  short_hash_init(&ht,FALSE,0,0,0);
   ht_ptr = ht.current_ptr;
   ht_ptr[0] = identity;
-  im = hash_locate(&ht,1);
+  im = short_hash_locate(&ht,1);
   if (im== -1) return 0;
   if (im!=1) {
     fprintf(stderr,"Hash-initialisation problem in fsa_wa.\n");
@@ -6086,16 +6135,20 @@ Printf("fsa_wa_xx!!\n");
     len = ngens; /* The length of the fsarow output. */
   nt = 0; /* Number of transitions in exists */
   tmalloc(cf,char,ndiff+1);
-  tmalloc(wa1states,int,1900000);
-  tmalloc(historys,int,1900000);
-  tmalloc(historyl,int,1900000);
+  tmalloc(wa1states, int,1900000);
+  tmalloc(historys, int,1900000);
+  tmalloc(historyl, int,1900000);
   int dollarcount=0;
   int limx=0;
   wa1states[1]=1; //map from new wa states to old (wa1) states
-      int *start_ptr=ht.current_ptr;
   int incx=0; 
   int incx2=0; 
   int kk=0;
+  int no_statesx=1;
+  int total_hashx=sizeof(int);
+  int total_rhs=0;
+  int total_equal=0;
+  //boolean first_coincidence=TRUE;
   while(kk<1900000)
   {
 	historys[kk]=0;
@@ -6110,10 +6163,13 @@ Printf("fsa_wa_xx!!\n");
     if (kbm_print_level>1) {
       if (
           (cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
-       Printf("    #cstate = %d;  number of states = %d.\n",cstate,ht.num_recs);
+       Printf("    #cstate = %d;  number of states = %d, hash space size =%d, rhs=%d,equal=%d\n",cstate,ht.num_recs,total_hashx,total_rhs,total_equal);
     }
-    cs_ptr = hash_rec(&ht,cstate);
-    cs_ptre = hash_rec(&ht,cstate) + hash_rec_len(&ht,cstate) - 1;
+  ht_ptr_save=ht.current_ptr;
+  block_space_save = ht.block_space;
+  tot_space_save=ht.tot_space;
+    cs_ptr = short_hash_rec(&ht,cstate);
+    cs_ptre = short_hash_rec(&ht,cstate) + short_hash_rec_len(&ht,cstate) - 1;
     if (!dense_op)
       len = 0;
     for (g1=1;g1<=ngens;g1++) {
@@ -6169,8 +6225,9 @@ Printf("fsa_wa_xx!!\n");
         ptr++;
 	// MAF algorithm inserted here
 	old_gt_state=SEEN_LHS_BETTER;
-	if (cs>ndiff)
+	if (cs>ndiff){
 		old_gt_state=SEEN_RHS_BETTER;
+	}
 	if (cs>2*ndiff)
 		old_gt_state=SEEN_EQUAL;
         if (csdiff == identity) { 
@@ -6242,6 +6299,7 @@ Printf("fsa_wa_xx!!\n");
 	int ll=97;
 	wordpath[99]='\0';
 	wordpath[98]=g1;
+	Printf("state %d\n",cstate);
 	while (current_state != 1)
 	{
 		//printf("%d, %d, %d\n",wa1states[historys[current_state]],historys[current_state],historyl[current_state]);
@@ -6280,22 +6338,55 @@ Printf("fsa_wa_xx!!\n");
       }
       ht_ptrb = ht.current_ptr;
       ht_ptre = ht_ptrb-1;
+      int local_hashx=0;
+      int local_rhs=0;
+      int local_equal=0;
       for (i=1;i<=ndiff;i++) {
         k = cf[i];
-        if (k>0)
+        if (k>0) {
 		incx++;
+		local_hashx++;
+	}
         if (k==SEEN_LHS_BETTER)
           *(++ht_ptre) = i;
-        else if (k==SEEN_RHS_BETTER)
+        else if (k==SEEN_RHS_BETTER) {
+	  local_rhs++;
           *(++ht_ptre) = ndiff+i;
-        else if (k==SEEN_EQUAL)
+	}
+        else if (k==SEEN_EQUAL) {
           *(++ht_ptre) = ndiff+ndiff+i;
+	  local_equal++;
+	}
       }
-      im = hash_locate(&ht,ht_ptre-ht_ptrb+1);
+      im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
       if (im== -1) return 0;
       
       if (im>0) {
-        if (historys[im]==0)
+	if (im==ht.num_recs) {
+		no_statesx++;
+		if (total_hashx>100000000) {
+			//printf("too big - Im going!\n");
+			ht.num_recs--;
+			if (ht.current_ptr - ht_ptr_save == ht_ptre-ht_ptrb+1) {
+  				ht.current_ptr=ht_ptr_save ;
+				ht.block_space = block_space_save;
+  				ht.tot_space = tot_space_save;
+			}
+			im=cstate;
+		}
+		else {
+			total_hashx+=(local_hashx*sizeof(short int));
+	        	total_rhs+=local_rhs;	
+	        	total_equal+=local_equal;	
+		}
+	}
+        /*else {
+		if (first_coincidence && (cstate>im)) {
+			printf("first coincidence=%d->%d>%d\n",cstate,g1,im);
+			first_coincidence=FALSE;
+		}
+      	}*/
+        if ((im<1900000) && (historys[im]==0))
 	{
 	wa1states[im]=wa1state;
 	historys[im]=cstate;
@@ -6304,7 +6395,8 @@ Printf("fsa_wa_xx!!\n");
       }
     }
   }
-  Printf("activity=%d\n",incx);
+  Printf("last state=%d,activity=%d\n,total_hash_memory=%d,total_rhs_better=%d,total_equal=%d\n",cstate,incx,total_hashx,total_rhs,total_equal);
+  Printf("no_statesx=%d,\n",no_statesx);
   Printf("activity2=%d\n",incx2);
   make_full_wd_fsa(new_diff2,inv,diff2->states->size+1,rs_wd);
   if (kbm_print_level>=1)
@@ -6316,7 +6408,7 @@ Printf("fsa_wa_xx!!\n");
   fsa_print(wfile,new_diff2,fsaname);
   fclose(wfile);
 
-  hash_clear(&ht);
+  short_hash_clear(&ht);
   tfree(cf);
   tfree(wa1states);
 
