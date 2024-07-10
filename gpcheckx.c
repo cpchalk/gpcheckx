@@ -594,7 +594,7 @@ int main2(argc, argv, read_last_wa,wa_size)
     {
       use_andnot = TRUE;
       verify=TRUE;
-      update_diff2 = FALSE;	
+      //update_diff2 = FALSE;	
       arg++;
       if (arg >= argc)
         badusage_gpcheckx(FALSE);
@@ -614,6 +614,7 @@ int main2(argc, argv, read_last_wa,wa_size)
     {
 	add_diagonals=TRUE;
 	all_diagonals=TRUE;
+	do_waonly=TRUE;
     }
     else if (strcmp(argv[arg],"-diagonalsx")==0)
     {
@@ -1098,7 +1099,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 	  {
 		printf("using gpwa_beginswith1 as lhs \n");
           	pfxred = fsa_pfxred(gpwa_beginswith1,op_store,
-				tempfilename);
+				tempfilename,0);
 	  }
 	  else
 	  {
@@ -2105,13 +2106,15 @@ else
       lhs_word[i]=null_char;
       if (verify)
       {
-	int fail_state=verify_word(lhs_word,gpwa,si,verify_qualifier);
+	if (verify_word(lhs_word,gpwa,si,0))
+		continue;
+	/*int fail_state=verify_word(lhs_word,gpwa,si,verify_qualifier);
 	if (fail_state)
 	{
 	 	printf("verify failed for state %d\n",fail_state);	
 		exit(1);
 	}
-	continue;
+	continue;*/
       }
       if (TRACE2) {
             int ii=0;
@@ -2328,7 +2331,7 @@ else
 }  
 int verify_word(gen * lhs, fsa *gpwa, int si, int start_reduced)
 {
-	printf("\b\b\b\b\b\b\b\b\b%d",si);
+	//printf("\b\b\b\b\b\b\b\b\b%d",si);
 	int ** watable=	gpwa->table->table_data_ptr;
 	int state=1;
 	int i;
@@ -2344,11 +2347,16 @@ int verify_word(gen * lhs, fsa *gpwa, int si, int start_reduced)
 	else if (start_reduced > 1)
 		start_unreduced=start_reduced - 1;
 	// verify that slice [0:n] reduces only on the last letter
+	int prev_state=1;
 	for (i=0;i<n;i++)
 	{
+		prev_state=state;
 		state=watable[lhs[i]][state];
+		if (prev_state==state)
+			return 1; // dont trust - maybe be truncated wa
 		if (state==0) break;
 	}
+	return 0;
 	if ((state!=0)||(i!=n-1))
 	{
 		printf("bad 1 on state %d\n",si);
@@ -3322,10 +3330,10 @@ void do_andnot (fsafile1,fsafile2,gp)
             strcat(filename,".andnot");
             if (!fsa1->accepting)
                 // convert fail state to accepting state
-                fsa1 = fsa_pfxred(fsa1,op_store,tempfilename);
+                fsa1 = fsa_pfxred(fsa1,op_store,tempfilename,0);
             if (!fsa2->accepting)
                 // convert fail state to accepting state
-                fsa2 = fsa_pfxred(fsa2,op_store,tempfilename);
+                fsa2 = fsa_pfxred(fsa2,op_store,tempfilename,0);
 
             fsaandnot = fsa_and_not_first(fsa2,fsa1,op_store,TRUE,tempfilename,0);
             //fsaandnot = fsa_and_not(fsa1,fsa2,op_store,TRUE,tempfilename);
@@ -4158,6 +4166,10 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
 		    dollarcount++;
 	  }
       } // for ptr
+      if (hashlimit && total_hashx>hashlimit) {
+        // crude truncation!!!
+	no_trans=FALSE;
+      }
       if (no_trans) {
         if (dense_op)
           fsarow[g1-1] = 0;
@@ -4183,7 +4195,12 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
         else if (k==SEEN_EQUAL)
           *(++ht_ptre) = ndiff+ndiff+i;
       }
-      im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
+      if (hashlimit && total_hashx>hashlimit) {
+        // crude truncation!!!
+	im=cstate;;
+      }
+      else
+      	im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
       if (im== -1) return 0;
 	if (TRACE5 && cstate<80) printf("%d->%d\n",g1,im);
       if (dense_op)
@@ -4195,16 +4212,11 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
       if (im>0) {
         nt++;
         if (im==ht.num_recs) {
-        if (hashlimit && total_hashx>hashlimit) {
-                        //printf("too big - Im going to !\n");
-                        ht.num_recs--;
-                        im=cstate;
-                }
-                else {
+       		 if (!(hashlimit && total_hashx>hashlimit)) {
                         total_hashx+=(local_hashx*sizeof(short int));
-                }
+               	} 
         }
-	}
+      }
     }
     if (!dense_op)
       fsarow[0] = len++;
