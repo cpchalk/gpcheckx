@@ -251,7 +251,7 @@ Example: f29 calculation using diagonals.
 
 ./bin/kbprog -wd -t 1000 -me 9000 f29
 
-./bin/gpcheckx -diagonals -diff2name diaggoody -waonly f29
+./bin/gpcheckx -diagonals -diff2name diaggoody  f29
 
 'f29.wa now correct'
 
@@ -267,7 +267,7 @@ Part 1 Add diagonals to the current set of word differences,
 store this larger set in gpname.diff2diaggood and build
 a word acceptor based on this which is then stored in gpname.wa2.
 
-./bin/gpcheckx  -diagonals  -diff2name diaggood -waonly  -v  $1;
+./bin/gpcheckx  -diagonals  -diff2name diaggood   -v  $1;
 
 cp $1.wa $1.wa2
 
