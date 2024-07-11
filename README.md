@@ -350,7 +350,7 @@ h93
 
 Ihechukwu Chinyerea, Gerald Williams,
 Hyperbolic groups of Fibonacci type and T(5) cyclically presented groups⋆
-https://arxiv.org/pdf/2008.0898
+https://arxiv.org/pdf/2008.08986
 
 f46
 
