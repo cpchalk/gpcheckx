@@ -333,3 +333,34 @@ time and memory of all.
 
 With the exception of the h93 calculation, the examples 
 given here will run with 2 GB of available memory.
+
+# References
+
+The interested reader is referred to the following
+publications that discuss the groups used in the 
+examples above.
+
+3572
+
+G. Havas and D.F. Holt. 
+On Coxeter’s families of group presentations. 
+J. Algebra 324(5) (2010), 1076-1082. 48
+
+h93
+
+Ihechukwu Chinyerea, Gerald Williams,
+Hyperbolic groups of Fibonacci type and T(5) cyclically presented groups⋆
+https://arxiv.org/pdf/2008.0898
+
+f46
+
+Christopher P Chalk
+Fibonacci Groups with Aspherical Presentations
+Comm. Algebra, 26(5):1511-1546, 1998
+
+f29  
+
+D.F. Holt, B. Eick and E.A. O’Brien, 
+Handbook of Computational Group Theory, 
+CRCPress, Boca Raton, 2005. Section 13.4
+
