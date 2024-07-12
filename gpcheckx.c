@@ -474,7 +474,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 { int arg, i, *inv, old_ndiff, numeqns, ngens;
   fsa  *diff2, *new_diff2, *diag_diff2,*diff2diag;
   char gpname[100],inf1[100], inf2[100], inf2x[100],inf3[100],inf4[100],inf5[100],
-       inf6[100],inf7[100], inf8[100], outf[100], fsaname[100], tempfilename[100];
+       inf6[100],inf7[100], inf8[100], inf9[100], outf[100], fsaname[100], tempfilename[100];
   fsa *wd_fsa; /* This is for doing word-reductions in the case that we
               * correct the diff2 machine
               */
@@ -629,6 +629,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 	limit_diagonals=atoi(argv[arg]);
 	add_diagonals=TRUE;
 	all_diagonals=TRUE;
+	do_waonly=TRUE;
     }
     else if (strcmp(argv[arg],"-checkdiagonals")==0)
     {
@@ -940,8 +941,16 @@ int main2(argc, argv, read_last_wa,wa_size)
   	int diag_diff2_max=diff2->states->size * ngens;
 	//int end1;
 	//int end2;
-  	if ((rfile = fopen(inf2,"r")) == 0) {
-       	 fprintf(stderr,"Cannot open file %s.\n",inf2);
+	char inf2xx [100];
+	if ((end_diagonals==999999)&&diff2name_command) {
+  		strcpy(inf2xx,gpname); 
+  		strcat(inf2xx,".diff2"); 
+  		strcat(inf2xx,diff2namestr); 
+	}
+	else
+		strcpy(inf2xx,inf2);
+  	if ((rfile = fopen(inf2xx,"r")) == 0) {
+       	 fprintf(stderr,"Cannot open file %s.\n",inf2xx);
           exit(1);
   	}
   	tmalloc(diag_diff2,fsa,1);
@@ -949,10 +958,9 @@ int main2(argc, argv, read_last_wa,wa_size)
   	fclose(rfile);
   	if (fsa_table_dptr_init(diag_diff2)== -1) return -1;
   	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,start_diagonals,end_diagonals,limit_diagonals,gpname);
-  	Printf("diff2 with diagonals has %d states\n",diag_diff2->states->size);
+  	Printf("\ndiff2 with diagonals has %d states\n",diag_diff2->states->size);
 	if (diff2name_command) {
-		char inf2xx [100];
-  		strcat(inf2xx,".diff2"); 
+  		strcpy(inf2xx,".diff2"); 
   		strcat(inf2xx,diff2namestr); 
       		write_fsa (diag_diff2,gpname,inf2xx,fsaname);
 	}
@@ -5438,7 +5446,7 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,st
  * new transitions.
  */
 #define xxx 0
-{ int i, j, gen1, l, ns, n, g1, g2, size_pba, **table, ***wd_table;
+{ int i, j, gen1, l, ns, ns_save, n, g1, g2, size_pba, **table, ***wd_table;
   gen **wdn, *stw, *ptr, *ptre, *ptr2;
   static boolean hadwarning=FALSE;
   gen testword[4096];
@@ -5447,6 +5455,7 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 
   size_pba = 1 + wd_fsaptr->alphabet->base->size;
   ns = wd_fsaptr->states->size;
+  ns_save=ns; // it could change!
   wdn = wd_fsaptr->states->words;
   table = wd_fsaptr->table->table_data_ptr;
   wd_table = wd_fsaptr->table->table_data_dptr;
@@ -5454,9 +5463,10 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
   int * cfn;
   int * letters;
   fsa *diff2c=NULL;
+  fsa *diff2=NULL;
   int total = 0;
   int total_diagonals=0;
-  if (check_diagonals) {
+  if (check_diagonals || (limit==999999)) {
   tmalloc(cf,char,ns+1);
   for (i=1;i<=ns;i++)
         cf[i] = 0;
@@ -5477,6 +5487,20 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
   	fsa_read(rfile,diff2c,DENSE,0,0,TRUE,fsaname);
   	fclose(rfile);
    }
+   if (end==999999) {
+  	strcpy(inf3,gpname);
+  	strcat(inf3,".diff2");
+
+  	if ((rfile = fopen(inf3,"r")) != 0) {
+		Printf("reading %s.diff2\n",gpname);
+  		tmalloc(diff2,fsa,1);
+  		fsa_read(rfile,diff2,DENSE,0,0,TRUE,fsaname);
+  		fclose(rfile);
+		wdn=diff2->states->words; //read words from diff2 - the biggy
+		ns=diff2->states->size;
+   	}
+  }
+	
   }
   int start_no=wd_fsaptr->states->size+1;
   int trace=0;
@@ -5486,6 +5510,7 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 	startstate=start;
   if (end>0 && end<ns && end>=start)
 	endstate=end;
+  ns=ns_save;
   for (gen1=1;gen1<size_pba;gen1++)
   //for (gen1=start;gen1<10;gen1++)
   {
@@ -5497,6 +5522,11 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 	// multiply every wd by a generator on the left
 	// to get all possible 'diagonal word differences'
 	// where a 'square' exists
+  if (diff2 && diff2c) {
+	startstate = start_no;
+	// the assumption is that diff2 (the biggy) starts with same states
+	// as wd_fsaptr. 
+  }
   for (i=startstate;i<=endstate;i++){
     int gen2=1;
     int jj=0;
@@ -5504,12 +5534,30 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 	   break;	
     if (diff2c) {
     	jj=diff_no(diff2c,wdn[i]);
+        if (diff2 && diff2c) {
+		if (jj > 0)
+	 	 // add to diff2 diag
+		{
+			total_diagonals++;
+      			n = (++wd_fsaptr->states->size);
+      			if (n > wd_fsaptr->table->maxstates){
+       				fprintf(stderr,"Too many word-differences. Increase maxwdiffs.\n");
+       				return -1;
+			}
+      			tmalloc(wd_fsaptr->states->words[n],gen,genstrlen(wdn[i])+1);
+      			genstrcpy(wd_fsaptr->states->words[n],wdn[i]);
+      			for (j=1;j<=wd_fsaptr->alphabet->size;j++)
+       				set_dense_target(table,j,n,0);
+      		}
+		continue; //next state of diff2
+	}
     	if (jj==0) {
 		cf[i]=-1;
 		cfn[i]=-1;
 		continue;
     	}
-    }
+   }
+
     for (gen2=1;gen2<size_pba;gen2++) {
 	if (limit>0 && (total_diagonals>limit))
 	   break;	
@@ -5527,8 +5575,12 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 		jj=0;
 		if (diff2c) {
 			jj=diff_no(diff2c,testword);
-			if (jj==0)
+			if (jj==0){
+			    if (limit != 999999)
 				j=-1;
+			    else
+			  	j=99; //pretend weve already got  a spurious wd
+			}
 		}
 	        if (check_diagonals && j>0 && j<=ns) {
 			if (xxx==0 || (j>xxx && i<=xxx)) {
@@ -5563,6 +5615,8 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
 	}
     } //for (gen2=1;gen2<size_pba;gen2++)
   } //for (i=2;i<=ns;i++
+  if (diff2 && diff2c)
+    break; // only interested in producing a diff2 with no spurious wd's
   } //for (gen1=1;gen1<size_pba;gen1++)
 Printf("Total diagonals=%d,limit=%d\n",total_diagonals,limit);
 if (check_diagonals) {
@@ -5587,6 +5641,8 @@ if (check_diagonals) {
   if (start_no<1)
     start_no = 1;
   for (i=start_no;i<=ns;i++){
+    if ((i-start_no)>0&&(i-start_no)%100 == 0)
+	Printf("%d ",i-start_no);
     for (g1=1;g1<=size_pba;g1++) for (g2=1;g2<=size_pba;g2++){
       if (g1==size_pba && g2==size_pba)
         continue; /* Don't want padding-symbol on both sides. */
