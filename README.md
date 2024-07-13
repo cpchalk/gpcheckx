@@ -202,10 +202,10 @@ calculated as follows.
 
 ./bin/gpcheckx -v -p f46 +rptz
 
-See the 'Add diagonals' section for a quicker way to do this
-calculation.
+See the 'Add diagonals' section for a quicker way to do the
+above calculations for h93 and f46.
 
-# Proving Non-hyperbolicity.
+# Proving non-hyperbolicity.
 
 If we suspect that a group is not hyperbolic (for example the group
 F(4,6), defined above, turns out not to be hyperbolic), it can be useful
@@ -218,10 +218,11 @@ achieved by specifying the -ve option. For example
 
 # Truncating a large word acceptor
 
-If a word acceptor, W, consists of M states, we can 
-truncate it to smaller number, N,  of states by treating 
-all states with number greater than N as fail states. 
-We specify this by the -s N switch.
+If a word acceptor, W, consists of N states, then we can 
+truncate it in memory to a smaller number, N,  of states by treating 
+all states with number greater than N as fail states of W. 
+
+We specify this by the -s N (or -s 'Base;Increment') switch.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
@@ -259,7 +260,7 @@ Example: f29 calculation using diagonals.
 
 'f29.diff2 now correct'
 
-# The 'Add Diagonals' Script. Another way of calculating F(4,6).
+# The 'Add Diagonals' script. 
 
 This script has two parts.
 
@@ -286,7 +287,11 @@ cp $1.wa2 $1.wa
 
 ./bin/gpcheckx -t -to 400 -diff2name diaggood -v $1
 
-F(4,6) can now also be calculated using the following 'recipe':-
+EXAMPLES
+
+1. F(4,6)
+
+F(4,6) can now be calculated using the following 'recipe':-
 
 ./bin/kbprog -wd -t 1000 -me 60000 f46
 
@@ -301,6 +306,24 @@ Run part 2 only of the 'add diagonals' script 2 times, then do
 ./bin/gpcheckx -v -p f46 +rptz
 
 f46.diff2 and f46.wa will now be correct.
+
+2. H93
+
+h93 can be calculated as follows
+
+./bin/kbprog -wd -t 1000 -me 50000 h93
+
+Run parts 1 and 2 of the 'add diagonals' script 2 times.
+
+h93.wa will now be correct.
+
+./bin/gpcheckx -w -diff2name diaggood -v -m h93 +rptz
+
+./bin/gpcheckx -w -diff2name diagood -v -p f46 +rptz
+
+h93.diff2 will now be correct.
+
+
 
 # Minimising time and memory requirements
 
@@ -352,9 +375,9 @@ Ihechukwu Chinyerea, Gerald Williams,
 Hyperbolic groups of Fibonacci type and T(5) cyclically presented groups⋆
 https://arxiv.org/pdf/2008.08986
 
-f46
+f46, f29
 
-Christopher P Chalk
+Christopher P Chalk,
 Fibonacci Groups with Aspherical Presentations
 Comm. Algebra, 26(5):1511-1546, 1998
 
