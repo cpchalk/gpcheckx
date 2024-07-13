@@ -319,7 +319,7 @@ h93.wa will now be correct.
 
 ./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
 
-./bin/gpcheckx -w -diff2name diaggood -v -p -to 500 f46 +rptz
+./bin/gpcheckx -w -diff2name diaggood -v -p -to 500 h93 +rptz
 
 h93.diff2 will now be correct.
 
