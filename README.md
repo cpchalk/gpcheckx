@@ -76,7 +76,7 @@ word differences
 
 truncate the word acceptor to N states
 
--s 'Base;-Increment'
+-s 'Base;Increment'
 
 truncate the word acceptor to Base states but repeat
 the action and increase the truncation value by Increment
@@ -202,7 +202,7 @@ calculated as follows.
 
 ./bin/gpcheckx -v -p f46 +rptz
 
-See the 'Add diagonals' section for a quicker way to do the
+See the 'Add diagonals' section for quicker ways to do the
 above calculations for h93 and f46.
 
 # Proving non-hyperbolicity.
@@ -268,7 +268,7 @@ Part 1 Add diagonals to the current set of word differences,
 store this larger set in gpname.diff2diaggood and build
 a word acceptor based on this which is then stored in gpname.wa2.
 
-./bin/gpcheckx  -diagonals  -diff2name diaggood   -v  $1;
+./bin/gpcheckx  -diagonals  -diff2name diaggood -v  $1;
 
 cp $1.wa $1.wa2
 
@@ -291,7 +291,7 @@ EXAMPLES
 
 1. F(4,6)
 
-F(4,6) can now be calculated using the following 'recipe':-
+F(4,6) can be calculated using the following 'recipe':-
 
 ./bin/kbprog -wd -t 1000 -me 60000 f46
 
@@ -317,9 +317,9 @@ Run parts 1 and 2 of the 'add diagonals' script 2 times.
 
 h93.wa will now be correct.
 
-./bin/gpcheckx -w -diff2name diaggood -v -m h93 +rptz
+./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
 
-./bin/gpcheckx -w -diff2name diagood -v -p f46 +rptz
+./bin/gpcheckx -w -diff2name diaggood -v -p -to 500 f46 +rptz
 
 h93.diff2 will now be correct.
 
