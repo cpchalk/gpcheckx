@@ -57,7 +57,7 @@ In this case, the file gpname.diff2 is deemed correct.
 # Switches (selection)
 -p 
 
-build a word acceptor that accepts prefix reduced
+build a word acceptor that accepts reducible prefix reduced
 words, construct an fsa that recognises 'fellow traveller'
 lhs=rhs equations, derive new lhs=rhs equations from
 which new word differences can be calculated.
@@ -149,7 +149,7 @@ then be computed as follows.
 
 3572
 
-./bin/kbprog -wd -t 1000 - me 200000 3572
+./bin/kbprog -wd -t 1000 -me 200000 3572
 
 ./bin/gpcheckx -v -p -s ‘60000;10000’ 3572
 
