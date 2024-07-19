@@ -552,7 +552,6 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean hashlimit_command = FALSE;
   int hashlimit=0;
   boolean exmin_command = FALSE;
-  char *exminstr;
   boolean exwa_command = FALSE;
   boolean exminex_command = FALSE;
   char * ex_str_wa, *ex_str_minex;
@@ -694,16 +693,9 @@ int main2(argc, argv, read_last_wa,wa_size)
 	diff2name_command=TRUE;
 	diff2namestr=argv[arg];
     }
-    else if (strcmp(argv[arg],"-exmin")==0)
+    else if (strcmp(argv[arg],"-extractwdsfrommin")==0)
     {
-		arg+=1;
-      	if (arg >= argc)
-      	{
-		printf("-exmin should be followed by one string\n");
-        	badusage_gpcheckx(FALSE);
-      	}
 	exmin_command=TRUE;
-	exminstr=argv[arg];
     }
     else if (strcmp(argv[arg],"-execwa")==0)
     {
@@ -982,31 +974,27 @@ int main2(argc, argv, read_last_wa,wa_size)
   strcpy(tempfilename,inf1);
   strcat(tempfilename,"temp_XXX");
 
+  if (exmin_command)
+	read_wa=FALSE;
   if (!use_andnot && !read_wa && !exwa_command) {
       if (add_diagonals) {
-      	//gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE);
-	if (exmin_command) {
-        	Printf("calling fsa_ex_min on %s.diff2 with diagonals added\n",gpname);
-      		gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
-		//exit(0);
-	}
-	else {
-        	Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname,hashlimit);
-      		gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE);
-	}
+        Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname,hashlimit);
+      	gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE);
     	free_fsa(diag_diff2);
       }
       else {
-        Printf("calling fsa_wa_x on %s.diff2\n",gpname);
       	//gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
 	if (exmin_command) {
-      		gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
+      		//gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
+      		gpwa=fsa_ex_min(diff2,op_store,tempfilename,inf5);
 	}
-	else
+	else {
+        	Printf("calling fsa_wa_x on %s.diff2\n",gpname);
       		gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE,hashlimit);
+	}
       }
       if (exmin_command) {
-        Printf("  #Number of states of exmin before minimisation = %d.\n",
+        Printf("  #Number of states of exmin  = %d.\n",
             gpwa->states->size);
         write_fsa (gpwa,gpname,".andnot",fsaname);
 	exit(0); 
@@ -6101,11 +6089,11 @@ fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr)
 
 // extract wds using minred
 // create list of lhs's suitable for scanning using gpcheckx -t option
-// invoke by -exmin gpname.minred switch
+// invoke by -extractwdsfrommin 
 int  ***dtable, ne, ngens, ndiff, ns, *fsarow,  nt, cstate, cs, csdiff, csi,
        im, i, k, g1, g2, len, identity;
  unsigned short int *ht_ptr, *ht_ptr_save, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
-  boolean dense_op, no_trans, no_trans_by_wa,good;
+  boolean dense_op,  no_trans_by_wa,good;
   char *cf;
   int *wa1states;
   int *historys;
@@ -6118,20 +6106,13 @@ int  ***dtable, ne, ngens, ndiff, ns, *fsarow,  nt, cstate, cs, csdiff, csi,
   int **mintable;
   char fsaname [100];
   FILE  *fopen();
-  int SEEN_LHS_BETTER = 1;
-  int SEEN_RHS_BETTER = 2;
-  int SEEN_EQUAL = 3;
   unsigned int	total_elements=0;
   unsigned int tot_space_save;
   unsigned int block_space_save;
   unsigned int fail_state;
 unsigned int no_fails=0;
 unsigned int no_accepts=0;
-//void short_hash_init();
-//int short_hash_locate();
-//void short_hash_clear();
-//unsigned short* short_hash_rec();
-
+Printf("Extracting new word differences from minred and diff2\n");	
     if ((rfile = fopen(minstr,"r")) == 0) {
         fprintf(stderr,"Cannot open file %s.\n",minstr);
         exit(1);
@@ -6212,29 +6193,17 @@ unsigned int no_accepts=0;
     fprintf(stderr,"Hash-initialisation problem in fsa_wa.\n");
      return 0;
   }
-  //ht_ptr[0] = 0; // record 2 is accept state
-  //ht_ptr[1] = 59999; 
-  //im = short_hash_locate(&ht,2);
-  //if (im== -1) return 0;
-  //if (im!=2) {
-  //  fprintf(stderr,"Hash-initialisation problem in fsa_wa.\n");
-  //   return 0;
-  //}
-if ((tempfile=fopen(tempfilename,"w"))==0){
+
+  if ((tempfile=fopen(tempfilename,"w"))==0){
     fprintf(stderr,"Error: cannot open file %s\n",tempfilename);
      return 0;
   }
- if (dense_op)
-    tmalloc(fsarow,int,ngens);
- len=ngens;
+  tmalloc(fsarow,int,ngens);
+  len=ngens;
  
   cstate = 0;
-  if (dense_op)
-    len = ngens; /* The length of the fsarow output. */
   nt = 0; /* Number of transitions in exists */
   tmalloc(cf,char,ndiff+1);
-  int dollarcount=0;
-  int limx=0;
   int incx=0; 
   int incx2=0; 
   int kk=0;
@@ -6247,15 +6216,10 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
   wa->num_accepting = 1;
   wa->accepting[1] = 1000000000;
   while (++cstate <= ht.num_recs) {
-	limx=ht.num_recs;
-    //if (kbm_print_level>=3) {
-      //if ((cstate<=1000 && cstate%100==0)||(cstate<=10000 && cstate%1000==0)||
-        //  (cstate<=100000 && cstate%5000==0) || cstate%50000==0)
-    // }
     if (kbm_print_level>1) {
       if (
           (cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
-       Printf("    #cstate = %d;  number of states = %d, hash space size =%d, rhs=%d,equal=%d\n",cstate,ht.num_recs,total_hashx,total_rhs,total_equal);
+       Printf("    #cstate = %d;  number of states = %d\n",cstate,ht.num_recs);
     }
   ht_ptr_save=ht.current_ptr;
   block_space_save = ht.block_space;
@@ -6279,16 +6243,13 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
 	looking_for_1s=TRUE;
 	//no_fails++;
 	no_trans_by_wa=TRUE;
-	no_trans=0;
 /* check if any of the wd's of this state have a transition by g1/x to 1 */
 /* If not, then this must be a lhs which doesnt fellow travel yet => new wd(s) */
       }
       if (wa1state==0)
       {
 	no_trans_by_wa=TRUE;
-	no_trans=0;
       }
-      incx2++;
       if (!looking_for_1s) {
       for (i=1;i<=ndiff;i++) {
         cf[i] = 0;
@@ -6296,10 +6257,6 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
       }
       ptr = cs_ptr+2; // first wd
    /* csdiff is the state of *fsaptr corresponding to cs */
-      no_trans = FALSE;
-/* We will set no_trans to be true if we find that the transition leads to
- * failure.
- */
       while (ptr <= cs_ptre) {
 	int gt_state, old_gt_state;;
         cs =  *ptr; // dont add initial state
@@ -6307,35 +6264,16 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
         if (csdiff==0) csdiff = ndiff;
    /* csdiff is the state of *fsaptr corresponding to cs */
         ptr++;
-	// MAF algorithm inserted here
-	old_gt_state=SEEN_LHS_BETTER;
-	if (cs>ndiff){
-		old_gt_state=SEEN_RHS_BETTER;
-	}
-	gt_state=SEEN_LHS_BETTER;
+	old_gt_state=1;
         if (csdiff == identity) { 
-		old_gt_state=SEEN_EQUAL;
 	        for (g2=1;g2<ngens+1;g2++){
 			if (g1==g2)
 				continue;
  			csi =  dense_dtarget(dtable,g1,g2,csdiff);
 			if (csi==0)
        		     		continue;
- 			//gt_state = g2 < g1 ? SEEN_RHS_BETTER : SEEN_LHS_BETTER;
 
-          		if (csi==identity)
-			{
-			 if (gt_state == SEEN_RHS_BETTER)
-			 {
-            			no_trans = TRUE;
-            			break;
-			 }
-			 continue;
-			}
-			if (g1 == g2)
-				gt_state = SEEN_EQUAL;
-            		if ( gt_state > cf[csi])
-              			cf[csi] = gt_state;
+              		cf[csi] = 1;
 		}
 	} 
 	else { //not identity
@@ -6348,21 +6286,12 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
 		  	if (csi==identity) {
 				found_1s = TRUE;
 				break;
-				/*
-           			if (gt_state == SEEN_RHS_BETTER)
-				{
-			      		no_trans = TRUE;
-			     		 break;
-		    		}
-				*/
 		  	}
 		  	continue;
 		  }
-            	  if ( gt_state > cf[csi])
-              		cf[csi] = gt_state;
+              	  cf[csi] = 1;
 		} // for g2
-	  //if (no_trans)
-           //break;
+
 	  if (looking_for_1s) {
 		/* now deal with pad on the right */
 	  	csi =  dense_dtarget(dtable,g1,g2,csdiff);
@@ -6370,20 +6299,9 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
 	  	{
 			found_1s = TRUE;
 			break;
-			/*
-            		no_trans = TRUE;
-            		break;
-			*/
 	  	}
 	  }
 	} // not identity
-          /*
-	  else {if (csi)
-		    cf[csi] = SEEN_RHS_BETTER;
-	       else if (WADIAG)
-		    //printf("%d-%d,%d>?\n",csdiff,g1,g2);
-		    dollarcount++;
-	  }*/
       } // for ptr
       if (looking_for_1s && !found_1s) {
 		accept_state=TRUE;
@@ -6394,7 +6312,7 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
       }
       if (no_trans_by_wa) {
 	if (accept_state) {
-		fsarow[g1-1] = 1000000000; // make 2 the accept state
+		fsarow[g1-1] = 1000000000; // make the last state + 1 the accept state
 		no_accepts++;
 	}
 	else {
@@ -6414,26 +6332,17 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
       for (i=1;i<=ndiff;i++) {
         k = cf[i];
         if (k>0) {
-		incx++;
 		local_hashx++;
 	}
-        if (k==SEEN_LHS_BETTER)
-          *(++ht_ptre) = i;
-        else if (k==SEEN_RHS_BETTER) {
-	  local_rhs++;
-          *(++ht_ptre) = ndiff+i;
-	}
-        else if (k==SEEN_EQUAL) {
-          *(++ht_ptre) = ndiff+ndiff+i;
-	  local_equal++;
-	}
+	if (k>0)
+         *(++ht_ptre) = i;
       }
       im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
       if (im== -1) return 0;
       fsarow[g1-1] = im; 
     } // for gens
     fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
-  }
+  } // while states
   // write an accept state
   int lenx=len; 
   while (lenx>0) {
@@ -6442,7 +6351,7 @@ if ((tempfile=fopen(tempfilename,"w"))==0){
   fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
   
   fclose(tempfile);
-  Printf("last state=%d,activity=%d\n,total_hash_memory=%d,total_rhs_better=%d,total_equal=%d\n",cstate,incx,total_hashx,total_rhs,total_equal);
+  Printf("last state=%d\n",cstate);
   Printf("Fails=%d\n, Accepts=%d\n",no_fails,no_accepts);
   short_hash_clear(&ht);
   tfree(cf);
