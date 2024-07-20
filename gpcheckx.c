@@ -564,6 +564,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   int start_diagonals=0;
   int end_diagonals=0;
   int limit_diagonals=0;
+  int max_state=0;
 
   int verify_qualifier;
   kbm_huge = TRUE;
@@ -616,7 +617,12 @@ int main2(argc, argv, read_last_wa,wa_size)
 	all_diagonals=TRUE;
 	do_waonly=TRUE;
     }
-    else if (strcmp(argv[arg],"-diagonalsx")==0)
+    else if (strcmp(argv[arg],"-maxstate")==0)
+    {
+	arg+=1;
+	max_state=atoi(argv[arg]);
+    }
+    else if (strcmp(argv[arg],"-diagonalsextra")==0)
     {
       arg+=3;
       if (arg >= argc)
@@ -986,7 +992,7 @@ int main2(argc, argv, read_last_wa,wa_size)
       	//gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
 	if (exmin_command) {
       		//gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
-      		gpwa=fsa_ex_min(diff2,op_store,tempfilename,inf5);
+      		gpwa=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state);
 	}
 	else {
         	Printf("calling fsa_wa_x on %s.diff2\n",gpname);
@@ -6080,11 +6086,12 @@ int diff_reducex(w,rs_wd)
   return 0;
 }
 
-fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr)
+fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr,max_state)
 	fsa *fsaptr;
 	storage_type op_table_type;
 	char *tempfilename;
 	char *minstr;
+	int max_state;
 { 
 
 // extract wds using minred
@@ -6216,10 +6223,14 @@ Printf("Extracting new word differences from minred and diff2\n");
   wa->num_accepting = 1;
   wa->accepting[1] = 1000000000;
   while (++cstate <= ht.num_recs) {
+    if (max_state>0)
+     if (cstate > max_state)
+	break;
     if (kbm_print_level>1) {
       if (
-          (cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
-       Printf("    #cstate = %d;  number of states = %d\n",cstate,ht.num_recs);
+          //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
+          cstate%50000==0)
+       Printf("    #cstate = %d;  number of states = %d, accepts %d\n",cstate,ht.num_recs,no_accepts);
     }
   ht_ptr_save=ht.current_ptr;
   block_space_save = ht.block_space;
@@ -6340,6 +6351,10 @@ Printf("Extracting new word differences from minred and diff2\n");
       im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
       if (im== -1) return 0;
       fsarow[g1-1] = im; 
+      if (max_state > 0)
+     	 if (im>max_state) {
+      		fsarow[g1-1] = 0; 
+	}
     } // for gens
     fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
   } // while states
