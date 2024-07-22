@@ -102,6 +102,7 @@ int  calculate_inverses();
 int  make_full_wd_fsax();
 int add_diagonals_to_wd_fsa();
 fsa *fsa_wa_x(); 
+fsa *fsa_extractwdsfromwa(); 
 fsa *fsa_ex_min(); 
 //fsa  *fsa_minred();
 //fsa  *fsa_minkb();
@@ -478,10 +479,10 @@ int main2(argc, argv, read_last_wa,wa_size)
   fsa *wd_fsa; /* This is for doing word-reductions in the case that we
               * correct the diff2 machine
               */
-  fsa *gpwa, *gpwa_beginswith1, *gpwa_beginswith2,*minred, *minred1,*pfxred,  
+  fsa *gpwa,  *gpwa2, *gpwa_beginswith1, *gpwa_beginswith2,*minred, *minred1,*pfxred,  
 	*minkb, *fsaexists,  *fsaandnot_ptr, *geowa;
 
-  boolean look_for_diff2_wds, p_switch,  use_andnot, read_wa, read_geowa,
+  boolean look_for_diff2_wds, p_switch,  use_andnot, use_andnotx, read_wa, read_geowa,
     read_minred, read_minred1,read_minkb, trace_equations;
   boolean diff2c = FALSE;
   boolean update_diff2 = TRUE;
@@ -552,6 +553,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean hashlimit_command = FALSE;
   int hashlimit=0;
   boolean exmin_command = FALSE;
+  boolean extractwdsfromwa_command = FALSE;
   boolean exwa_command = FALSE;
   boolean exminex_command = FALSE;
   char * ex_str_wa, *ex_str_minex;
@@ -568,6 +570,8 @@ int main2(argc, argv, read_last_wa,wa_size)
 
   int verify_qualifier;
   kbm_huge = TRUE;
+  use_andnotx = FALSE;
+  use_andnot = FALSE;
   while (argc > arg) {
     if (strcmp(argv[arg],"-dogeowds") == 0) {
       dogeowds = TRUE;
@@ -617,6 +621,10 @@ int main2(argc, argv, read_last_wa,wa_size)
 	all_diagonals=TRUE;
 	do_waonly=TRUE;
     }
+    else if (strcmp(argv[arg],"-diagonalsonly")==0)
+    {
+	read_wa=TRUE; // trick to exit after diagonals 
+    }
     else if (strcmp(argv[arg],"-maxstate")==0)
     {
 	arg+=1;
@@ -624,10 +632,25 @@ int main2(argc, argv, read_last_wa,wa_size)
     }
     else if (strcmp(argv[arg],"-diagonalsextra")==0)
     {
+      arg+=2;
+      if (arg >= argc)
+      {
+	printf("-diagonalsextra should be followed by start and end values\n");
+        badusage_gpcheckx(FALSE);
+      }
+	start_diagonals=atoi(argv[arg-1]);
+	end_diagonals=atoi(argv[arg]);
+	limit_diagonals=0;
+	add_diagonals=TRUE;
+	all_diagonals=TRUE;
+	do_waonly=TRUE;
+    }
+    else if (strcmp(argv[arg],"-diagonalsextrax")==0)
+    {
       arg+=3;
       if (arg >= argc)
       {
-	printf("-diagonalsx should be followed by start and limit values (or 0 0 0)\n");
+	printf("-diagonalsextrax should be followed by start and end and limit values\n");
         badusage_gpcheckx(FALSE);
       }
 	start_diagonals=atoi(argv[arg-2]);
@@ -702,6 +725,10 @@ int main2(argc, argv, read_last_wa,wa_size)
     else if (strcmp(argv[arg],"-extractwdsfrommin")==0)
     {
 	exmin_command=TRUE;
+    }
+    else if (strcmp(argv[arg],"-extractwdsfromwa")==0)
+    {
+	extractwdsfromwa_command=TRUE;
     }
     else if (strcmp(argv[arg],"-execwa")==0)
     {
@@ -779,6 +806,10 @@ int main2(argc, argv, read_last_wa,wa_size)
       look_for_diff2_wds = FALSE;
     else if (strcmp(argv[arg],"-t")==0)
       use_andnot = TRUE;
+    else if (strcmp(argv[arg],"-tx")==0) {
+      use_andnotx = TRUE;
+      use_andnot = TRUE;
+    }
     else if (strcmp(argv[arg], "-tt") == 0) {
       arg++;
       if (arg >= argc)
@@ -915,6 +946,14 @@ int main2(argc, argv, read_last_wa,wa_size)
   fclose(rfile);
   if (fsa_table_dptr_init(new_diff2)== -1) return -1;
   //if (!add_diagonals && use_andnot)  
+  if (extractwdsfromwa_command && !diff2name_command) {
+	printf("please specify  -diff2name \n");
+	exit(0);
+  }
+  if (exmin_command && !diff2name_command) {
+	printf("please specify  -diff2name \n");
+	exit(0);
+  }
   if (!add_diagonals)  {
 	if (diff2name_command) {
   		strcat(inf2x,diff2namestr); // gpname.diff2+diff2namestr
@@ -980,7 +1019,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   strcpy(tempfilename,inf1);
   strcat(tempfilename,"temp_XXX");
 
-  if (exmin_command)
+  if (exmin_command ||extractwdsfromwa_command)
 	read_wa=FALSE;
   if (!use_andnot && !read_wa && !exwa_command) {
       if (add_diagonals) {
@@ -992,19 +1031,42 @@ int main2(argc, argv, read_last_wa,wa_size)
       	//gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
 	if (exmin_command) {
       		//gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
-      		gpwa=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state);
+      		gpwa2=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state);
+		use_andnot=TRUE;
+	}
+	else if (extractwdsfromwa_command) {
+      		gpwa2=fsa_extractwdsfromwa(diff2diag,op_store,tempfilename,inf4,max_state);
+		use_andnotx=TRUE;
 	}
 	else {
         	Printf("calling fsa_wa_x on %s.diff2\n",gpname);
       		gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE,hashlimit);
+	     }
+      }
+      if (exmin_command || extractwdsfromwa_command) {
+	if (gpwa2==NULL) {
+		Printf("No list of lhs words produced\n");
+		exit(0);
 	}
+        Printf("  #Number of states of extractwdsfrom fsa  = %d.\n",
+            gpwa2->states->size);
+        write_fsa (gpwa2,gpname,".andnot",fsaname);
+	free_fsa(gpwa2);
+	// read wa
+    	if ((rfile = fopen(inf4,"r")) == 0) {
+       	 	fprintf(stderr,"Cannot open file %s.\n",inf4);
+       	 	exit(1);
+    	}
+    	Printf("reading %s\n",inf4);
+    	tmalloc(gpwa,fsa,1);
+    	fsa_read(rfile,gpwa,DENSE,0,0,TRUE,fsaname);
+    	Printf("%s has size %d\n",inf4,gpwa->states->size);
+    	*wa_size=gpwa->states->size;
+    	fclose(rfile);               
+	//if (exmin_command)
+	//	exit(0);
       }
-      if (exmin_command) {
-        Printf("  #Number of states of exmin  = %d.\n",
-            gpwa->states->size);
-        write_fsa (gpwa,gpname,".andnot",fsaname);
-	exit(0); 
-      }
+      else { 
      
       if (kbm_print_level>1)
         printf("  #Number of states of gpwa before minimisation = %d.\n",
@@ -1017,6 +1079,7 @@ int main2(argc, argv, read_last_wa,wa_size)
       *wa_size=gpwa->states->size;
       if (do_waonly)
 	 exit(0);	
+      }
   }
   else {
     //-t, -exec -w or -geo switches
@@ -1046,11 +1109,11 @@ int main2(argc, argv, read_last_wa,wa_size)
   if (do_beginswith) {
 	printf("calling fsa_beginswith\n");
 	gpwa_beginswith1=fsa_beginswith(gpwa,bwqual1);
- }
+  }
 	
 
-  if (use_andnot) {
-      // -t switch
+  if (use_andnot||use_andnotx) {
+      // -t or -tx  switch
       // scan existing andnot file
       if ((rfile = fopen(inf3,"r")) != 0) {
           Printf("reading %s\n",inf3);
@@ -1501,7 +1564,8 @@ else {
       }
 
   }
-  write_fsa(fsaandnot_ptr,gpname,".andnot",fsaname);
+  if (!use_andnot && !use_andnotx)
+    write_fsa(fsaandnot_ptr,gpname,".andnot",fsaname);
   if (no_scan) {
     printf("no scan\n");
   return 0;
@@ -1520,7 +1584,7 @@ else {
                 gpwa,new_diff2,inv,no_dots,scale,
 		minwordlen,maxwordlen,trace_equations,
 		&pos_max,use_alt_prestate,verify,verify_qualifier,
-		prefixby1,timeout);
+		prefixby1,timeout,use_andnotx);
   if (maxl>1)
    printf("\nmaximum word length below bound is %d at %d\n",maxl,pos_max);
   kbm_print_level++;
@@ -1804,7 +1868,7 @@ void badusage_gpcheckx(overview)
 int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
                    no_dots,scale,minwordlen, maxwordlen,trace_equations,
 		   pos_max,use_alt_prestate,verify,verify_qualifier,
-			prefixby1,timeout)
+			prefixby1,timeout,andnotx)
 	fsa *fsaptr;
 	reduction_struct *rs_wd;
 	reduction_struct *rs_wd2;
@@ -1823,6 +1887,7 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
 	int verify_qualifier;
 	boolean prefixby1;
 	int timeout;
+	boolean andnotx; //use fsaptr as  wa for onelevelreduced
 {
  // partly converted from Alun Williams MAF code
 
@@ -1842,6 +1907,7 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
 
   fsa *diff2=rs_wd->wd_fsa;
   fsa *diff2_copy, *diff2_copy2;
+  fsa *wa_for_1_level;
   int ***table_dptr, *prestates, *prestates2, *poststates, *distances;
   gen  *preletters, *preletters2,*postletters;
   int diff_size=diff2->states->size;
@@ -1857,6 +1923,10 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
 	fsa_clear(fsaptr);
         return -1;
   }
+  if (andnotx)
+	wa_for_1_level=fsaptr;
+  else
+	wa_for_1_level=gpwa; 
 
   int sample;
   int newdiff;
@@ -1979,7 +2049,8 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
   }
   tfree(succeeding);
   tfree(distances);
-  fsa_clear(fsaptr);
+  if (!andnotx)
+  	fsa_clear(fsaptr);
   table=NULL;
 
   tmalloc(statesdone,boolean,nr_states+1);
@@ -2026,6 +2097,7 @@ else
   unsigned int total_length=0;
   int** watable=gpwa->table->table_data_ptr;
 
+  int fails=0;
   ne = gpwa->alphabet->size;
 
   clock_t start_t, end_t, total_t;
@@ -2199,8 +2271,11 @@ else
 		printf("one_level_reducible called. target is %d\n",j);
       processed_words++;
       total_length+=genstrlen(lhs_word);
-      if (!one_level_reducible(lhs_word,table_dptr,gpwa,j,block1,block2))
+      if (!one_level_reducible(lhs_word,table_dptr,wa_for_1_level,j,block1,block2))
       {
+    	  int accept_state=0; 
+    	  if (wa_for_1_level->num_accepting == 1) // using andnot file as the word acceptor
+  		accept_state = wa_for_1_level->accepting[1];
 	  if (TRACE2)
 		printf("calling genstrcpy\n");
           genstrcpy(rhs_word,lhs_word);
@@ -2208,7 +2283,7 @@ else
                  printf("calling diff_reduce\n");
           }
 
-    	  int **watable=gpwa->table->table_data_ptr;
+    	  int **watable=wa_for_1_level->table->table_data_ptr;
 	  int len=genstrlen(rhs_word);
 	  int i=0; 
 	  boolean reduced=TRUE;
@@ -2217,7 +2292,7 @@ else
 	  while (i<len) {
 		state=watable[rhs_word[i]][state];
 		i++;
-		if (state==0){
+		if (state==0 || state==accept_state){
 			reduced=FALSE;
 			break;
 		}
@@ -2302,19 +2377,38 @@ else
 	  else {
 		// this shouldn't happen normally  - the diff2 set is inconsistent with the wa -
 		// to avoid being stuck in 1000's of unnecessary diff_reduce's timeout after  so many secs
+                // or bug or limit hit in one_level_reduce
+		fails++;
 		if (timeout==0)
 		{
-			PPrintf("!t");
-			timeout = total_t + 300;
-                  	display_eqn(si,lhs_word,rhs_word,
-				diff2->alphabet->base->names);
+			if (!andnotx) { // we seem to get this error when the andnot is truncated
+				PPrintf("!t");
+				timeout = total_t + 300;
+                  		display_eqn(si,lhs_word,rhs_word,
+					diff2->alphabet->base->names);
+			}
+	 /*
+	  {int state=1;
+	  PPrintf("%d>",state);
+	  len = genstrlen(lhs_word);
+          i=0;
+	  while (i<len) {
+		state=watable[lhs_word[i]][state];
+	  	PPrintf("%d>",state);
+		i++;
+		if (state==0 || state==accept_state){
+			reduced=FALSE;
+			break;
+		}
+	  }}
+         */
 		}
 	  }
 	 } // if not one_level_reducible
    } 
    end_t=clock();
    total_t=(end_t-start_t)/CLOCKS_PER_SEC;
-   PPrintf("\nscan duration=%lds\n",total_t);
+   PPrintf("\nscan duration=%lds, efficiency fails=%d\n",total_t,fails);
 
    //printf("\nprocessed %d words, ignored %d duplicate words\n",
    //		processed_words,ignored_duplicates);
@@ -2756,7 +2850,9 @@ boolean one_level_reducible (lhs,dtable,gpwa,target_state,block1,block2)
     int no_xpairs, no_xminus1pairs;
     boolean block1to2;
     int diff_identity;
-
+    int accept_state=0; 
+    if (gpwa->num_accepting == 1) // using andnot file as the word acceptor
+  	accept_state = gpwa->accepting[1];
     block1to2=TRUE;
     x_state=block1;
     no_xpairs=0;
@@ -2841,7 +2937,7 @@ boolean one_level_reducible (lhs,dtable,gpwa,target_state,block1,block2)
 				printf("read from watable with %d,%d\n",g2,sw);
                         sw_dash=watable[g2][sw];
 	            }	
-                    if (sw_dash !=0)
+                    if (sw_dash !=0 && sw_dash != accept_state)
                     {
                         if ((x>=n) && (sd_dash==target_state)) {
                                 if (TRACE1) {
@@ -5458,7 +5554,7 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,st
   static boolean hadwarning=FALSE;
   gen testword[4096];
 
-Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
+Printf("start=%d,end=%d\n",start,end);
 
   size_pba = 1 + wd_fsaptr->alphabet->base->size;
   ns = wd_fsaptr->states->size;
@@ -5625,7 +5721,7 @@ Printf("start=%d,end=%d,limit=%d\n",start,end,limit);
   if (diff2 && diff2c)
     break; // only interested in producing a diff2 with no spurious wd's
   } //for (gen1=1;gen1<size_pba;gen1++)
-Printf("Total diagonals=%d,limit=%d\n",total_diagonals,limit);
+Printf("Total diagonals=%d\n",total_diagonals);
 if (check_diagonals) {
 	printf("checking..\n");
         printf("letters\n");
@@ -6367,7 +6463,7 @@ Printf("Extracting new word differences from minred and diff2\n");
   
   fclose(tempfile);
   Printf("last state=%d\n",cstate);
-  Printf("Fails=%d\n, Accepts=%d\n",no_fails,no_accepts);
+  Printf(" Accepts=%d\n",no_accepts);
   short_hash_clear(&ht);
   tfree(cf);
   ns = wa->states->size = ht.num_recs+1;
@@ -6375,6 +6471,7 @@ Printf("Extracting new word differences from minred and diff2\n");
   wa->table->numTransitions = nt;
 /* Now read the transition table back in */
   tempfile = fopen(tempfilename,"r");
+  if (no_accepts>0)
   //compressed_transitions_read(wa,tempfile);
   {
   int ns, ne, nt, **table, *tab_ptr, len, i, j;
@@ -6399,6 +6496,353 @@ Printf("Extracting new word differences from minred and diff2\n");
   fclose(tempfile);
 
   unlink(tempfilename);
-  return wa; // scan using -t switch
+  if (no_accepts>0)
+  	return wa; // scan using -t switch
+  return NULL;
 
+}
+
+fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state)
+	fsa *fsaptr;
+	storage_type op_table_type;
+	char *tempfilename;
+	char * wastr; 
+	int max_state;
+{ int  ***dtable, ne, ngens, ndiff, ns, *fsarow, nt, cstate, cs, csdiff, csi,
+       im, i, k, g1, g2, len, identity;
+  unsigned short int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
+  boolean dense_op, no_trans, no_trans_by_wa, good;
+  char *cf;
+  short_hash_table ht;
+  fsa *wa, *gpwa;
+  FILE *tempfile, *fopen();
+  char fsaname [100];
+  int **watable;
+  int fail_state=0;
+
+  int SEEN_LHS_BETTER = 1;
+  int SEEN_RHS_BETTER = 2;
+  int SEEN_EQUAL = 3;
+
+
+    unsigned int no_accepts=0;
+    Printf("Extracting new word differences from wa and diff2\n");
+    if ((rfile = fopen(wastr,"r")) == 0) {
+        fprintf(stderr,"Cannot open file %s.\n",wastr);
+        exit(1);
+    }
+    Printf("reading %s\n",wastr);
+    tmalloc(gpwa,fsa,1);
+    fsa_read(rfile,gpwa,DENSE,0,0,TRUE,fsaname);
+    Printf("%s has size %d\n",wastr,gpwa->states->size);
+    fclose(rfile);               
+  watable=gpwa->table->table_data_ptr;
+  if (!fsaptr->flags[DFA]){
+    fprintf(stderr,"Error: fsa_wa only applies to DFA's.\n");
+    return 0;
+  }
+
+  if (fsaptr->alphabet->type != PRODUCT || fsaptr->alphabet->arity != 2) {
+    fprintf(stderr,"Error in fsa_wa: fsa must be 2-variable.\n");
+    return 0;
+  }
+  if (fsaptr->states->type != WORDS) {
+    fprintf(stderr,"Error in fsa_wa: fsa must be word-difference type.\n");
+    return 0;
+  }
+
+  tmalloc(wa,fsa,1);
+  fsa_init(wa);
+  srec_copy(wa->alphabet,fsaptr->alphabet->base);
+  wa->flags[DFA] = TRUE;
+  wa->flags[ACCESSIBLE] = TRUE;
+  wa->flags[BFS] = TRUE;
+
+  ne = fsaptr->alphabet->size;
+  ngens = wa->alphabet->size;
+  ndiff = fsaptr->states->size;
+
+  if (ne != (ngens+1)*(ngens+1)-1) {
+   fprintf(stderr,
+       "Error: in a 2-variable fsa, alphabet size should = ngens^2 - 1.\n");
+    return 0;
+  }
+
+  identity = fsaptr->accepting[1]; /* assumed to be unique */
+  if (fsaptr->num_accepting!=1 || (identity != fsaptr->initial[1])) {
+    fprintf(stderr,"Error: Input to fsa_wa not a word-difference machine.\n");
+    return 0;
+  }
+
+  if (fsaptr->table->table_type!=DENSE) {
+     fprintf(stderr,
+      "Error: function fsa_wa can only be called with a densely-stored fsa.\n");
+     return 0;
+  }
+  dense_op = op_table_type==DENSE;
+  if (fsa_table_dptr_init(fsaptr)== -1) return 0;
+  dtable = fsaptr->table->table_data_dptr;
+
+  wa->states->type = SIMPLE;
+  wa->num_initial = 1;
+  tmalloc(wa->initial,int,2);
+  wa->initial[1] = 1;
+  wa->table->table_type = op_table_type;
+  wa->table->denserows = 0;
+  wa->table->printing_format = op_table_type;
+  
+  short_hash_init(&ht,FALSE,0,0,0);
+  ht_ptr = ht.current_ptr;
+  *(unsigned int *) ht_ptr=identity;
+  //*(unsigned int *) (ht_ptr+2)=identity; //wa2state
+  *(ht_ptr+2)=identity;
+  //*(ht_ptr+4)=identity; //wa2state
+  im = short_hash_locate(&ht,3);
+  //im = short_hash_locate(&ht,5);//wa2state
+  //ht_ptr[0] = identity;
+  //im = short_hash_locate(&ht,1);
+  if (im== -1) return 0;
+  if (im!=1) {
+    fprintf(stderr,"Hash-initialisation problem in fsa_wa.\n");
+     return 0;
+  }
+  if ((tempfile=fopen(tempfilename,"w"))==0){
+    fprintf(stderr,"Error: cannot open file %s\n",tempfilename);
+     return 0;
+  }
+  if (dense_op)
+    tmalloc(fsarow,int,ngens)
+  else
+    tmalloc(fsarow,int,2*ngens+1)
+ 
+  cstate = 0;
+  if (dense_op)
+    len = ngens; /* The length of the fsarow output. */
+  nt = 0; /* Number of transitions in exists */
+  tmalloc(cf,char,ndiff+1);
+  int dollarcount=0;
+  int total_hashx=sizeof(short int);
+  tmalloc(wa->accepting,int,1);
+  wa->num_accepting = 1;
+  wa->accepting[1] = 1000000000;
+  while (++cstate <= ht.num_recs) {
+    if (max_state>0)
+     if (cstate > max_state)
+        break;
+    if (kbm_print_level>1) {
+      if (
+          //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
+          cstate%50000==0)
+       Printf("    #cstate = %d;  number of states = %d, accepts %d\n",cstate,ht.num_recs,no_accepts);
+    }
+    cs_ptr = short_hash_rec(&ht,cstate);
+    cs_ptre = short_hash_rec(&ht,cstate) + short_hash_rec_len(&ht,cstate) - 1;
+    if (!dense_op)
+      len = 0;
+    for (g1=1;g1<=ngens;g1++) {
+/* Calculate action of generator g1 on state cstate  - to get the image, we
+ * have to apply (g1,g2) to each element in the subset corresponding to cstate,
+ * and this for each generator g2 of the base-alphabet (including the padding
+ * symbol).
+ * Since we are excluding words that contain subwords w_1 s.t. (w_1,w_2) is
+ * accepted by *fsaptr, we also have to apply (g1,g2) to the initial state
+ * of *fsaptr.
+ */
+      int local_hashx=0;
+      int wa1state=watable[g1][*(unsigned int *)cs_ptr];
+      //int wa2state=watable[g1][*(unsigned int *)cs_ptr+2];//wa2state
+      //if (cstate==1) //wa2state
+      //		wa2state=1; //wa2state
+      // wa2state ensures that only minimally reducible words are accepted
+      no_trans_by_wa=FALSE;
+      boolean accept_state = FALSE;
+
+      for (i=1;i<=ndiff;i++)
+        cf[i] = 0;
+      ptr = cs_ptr-1;
+      ptr+=2; // skip the wa1state
+      //ptr+=2; // skip the wa2state
+   /* csdiff is the state of *fsaptr corresponding to cs */
+      no_trans = FALSE;
+/* We will set no_trans to be true if we find that the transition leads to
+ * failure.
+ */
+      while (ptr <= cs_ptre) {
+	int gt_state, old_gt_state;;
+/* We add the initial state of *fsaptr to the subset representing cstate */
+        cs = ptr<(cs_ptr+2) ? identity : *ptr;
+        //cs = ptr<(cs_ptr+4) ? identity : *ptr; //wa2state
+        csdiff = cs%ndiff;
+        if (csdiff==0) csdiff = ndiff;
+   /* csdiff is the state of *fsaptr corresponding to cs */
+        ptr++;
+	// MAF algorithm inserted here
+	old_gt_state=SEEN_LHS_BETTER;
+	if (cs>ndiff)
+		old_gt_state=SEEN_RHS_BETTER;
+	if (cs>2*ndiff)
+		old_gt_state=SEEN_EQUAL;
+        if (csdiff == identity) { 
+		old_gt_state=SEEN_EQUAL;
+	        for (g2=1;g2<ngens+1;g2++){
+ 			csi =  dense_dtarget(dtable,g1,g2,csdiff);
+			if (csi==0)
+       		     		continue;
+ 			gt_state = g2 < g1 ? SEEN_RHS_BETTER : SEEN_LHS_BETTER;
+
+          		if (csi==identity)
+			{
+			 if (gt_state == SEEN_RHS_BETTER)
+			 {
+            			no_trans = TRUE;
+            			break;
+			 }
+			 continue;
+			}
+			if (g1 == g2)
+				gt_state = SEEN_EQUAL;
+            		if ( gt_state > cf[csi])
+              			cf[csi] = gt_state;
+		}
+	}
+	else {
+		for (g2=1;g2<ngens+1;g2++){
+		  csi =  dense_dtarget(dtable,g1,g2,csdiff);
+		  if (csi==0)
+		    continue;
+		  gt_state=old_gt_state;	
+		  if (csi==identity) {
+           		if (gt_state == SEEN_RHS_BETTER)
+			{
+			      no_trans = TRUE;
+			      break;
+		    	}
+			continue;
+		  }
+            	  if ( gt_state > cf[csi])
+              		cf[csi] = gt_state;
+		}
+	}
+        if (no_trans)
+          break;
+	/* now deal with pad on the right */
+	  csi =  dense_dtarget(dtable,g1,g2,csdiff);
+          if (csi==identity)
+	  {
+            	no_trans = TRUE;
+            	break;
+	  }
+	  else {if (csi)
+		    cf[csi] = SEEN_RHS_BETTER;
+	       else if (WADIAG)
+		    //printf("%d-%d,%d>?\n",csdiff,g1,g2);
+		    dollarcount++;
+	  }
+      } // for ptr
+      if (no_trans) {
+        if (dense_op)
+          fsarow[g1-1] = 0;
+        //if (wa1state > 0 && wa2state > 0)  //wa2state
+        if (wa1state > 0 ) {
+               fsarow[g1-1] = 1000000000; // make the last state + 1 the accept state
+                no_accepts++;	
+	}
+        continue;
+      }
+/* Now we have the image stored in the array cf, and we translate it to a list
+ * and insert it into the hash-table.
+ */
+	if (TRACE5 && cstate< 80) printf("%d****\n",cstate);
+      ht_ptrb = ht.current_ptr;
+      ht_ptre = ht_ptrb-1;
+      *(unsigned int *)(++ht_ptre)=wa1state;
+      ht_ptre++;
+      //*(unsigned int *)(++ht_ptre)=wa2state; //wa2state
+      //ht_ptre++;			     //wa2state
+      for (i=1;i<=ndiff;i++) {
+        k = cf[i];
+        if (k>0) {
+                local_hashx++;
+        }
+	if (TRACE5 && cstate < 80 && cf[i])
+		printf(" %d-%d\n",i,cf[i]);
+        if (k==SEEN_LHS_BETTER)
+          *(++ht_ptre) = i;
+        else if (k==SEEN_RHS_BETTER)
+          *(++ht_ptre) = ndiff+i;
+        else if (k==SEEN_EQUAL)
+          *(++ht_ptre) = ndiff+ndiff+i;
+      }
+      im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
+      if (im== -1) return 0;
+	if (TRACE5 && cstate<80) printf("%d->%d\n",g1,im);
+      if (dense_op)
+         fsarow[g1-1] = im;
+      else if (im>0) {
+         fsarow[++len] = g1;
+         fsarow[++len] = im;
+      }
+      if (im>0) 
+        nt++;
+        
+      if (max_state > 0)
+     	 if (im>max_state) {
+      		fsarow[g1-1] = 0; 
+	}
+    } //for g1 
+    if (!dense_op)
+      fsarow[0] = len++;
+    fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
+  } // while states
+  // write an accept state
+  int lenx=len;
+  while (lenx>0) {
+        fsarow[--lenx]=0;
+  }
+  fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
+  fclose(tempfile);
+
+  Printf("last state=%d\n",cstate);
+  Printf("Accepts=%d\n",no_accepts);
+  short_hash_clear(&ht);
+  tfree(fsarow);
+  tfree(cf);
+  if (WADIAG)
+	printf("%d dollar calculations\n",dollarcount);
+
+  wa->table->numTransitions = nt;
+  ns = wa->states->size = ht.num_recs+1;
+  wa->accepting[1] = ns;
+  wa->table->numTransitions = nt;
+
+/* Now read the transition table back in */
+  tempfile = fopen(tempfilename,"r");
+  if (no_accepts>0)
+  //compressed_transitions_read(wa,tempfile);
+  {
+  int ns, ne, nt, **table, *tab_ptr, len, i, j;
+
+  ns = wa->states->size;
+  ne = wa->alphabet->size;
+  nt = wa->table->numTransitions;
+
+  if (wa->table->table_type == DENSE) {
+    /* it is a pity that the table was output in transposed form! */
+    fsa_table_init(wa->table, ns, ne);
+    table = wa->table->table_data_ptr;
+    for (i = 1; i <= ns; i++)
+      for (j = 1; j <= ne; j++) {
+        size_t s = fread((void *)(table[j] + i), sizeof(int), (size_t)1, tempfile);
+        if (*(table[j]+i) > ns)
+                *(table[j]+i)=ns;
+        (void)s; // HACK to silence compiler warning
+      }
+  }
+  } // compressed_transitions
+  fclose(tempfile);
+
+  unlink(tempfilename);
+  if (no_accepts>0)
+  	return wa;
+  return NULL;
 }
