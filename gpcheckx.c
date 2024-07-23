@@ -567,6 +567,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   int end_diagonals=0;
   int limit_diagonals=0;
   int max_state=0;
+  int max_level=0;
 
   int verify_qualifier;
   kbm_huge = TRUE;
@@ -624,6 +625,11 @@ int main2(argc, argv, read_last_wa,wa_size)
     else if (strcmp(argv[arg],"-diagonalsonly")==0)
     {
 	read_wa=TRUE; // trick to exit after diagonals 
+    }
+    else if (strcmp(argv[arg],"-maxlevel")==0)
+    {
+	arg+=1;
+	max_level=atoi(argv[arg]);
     }
     else if (strcmp(argv[arg],"-maxstate")==0)
     {
@@ -1031,11 +1037,11 @@ int main2(argc, argv, read_last_wa,wa_size)
       	//gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
 	if (exmin_command) {
       		//gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
-      		gpwa2=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state);
+      		gpwa2=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state,max_level);
 		use_andnot=TRUE;
 	}
 	else if (extractwdsfromwa_command) {
-      		gpwa2=fsa_extractwdsfromwa(diff2diag,op_store,tempfilename,inf4,max_state);
+      		gpwa2=fsa_extractwdsfromwa(diff2diag,op_store,tempfilename,inf4,max_state,max_level);
 		use_andnotx=TRUE;
 	}
 	else {
@@ -6182,12 +6188,13 @@ int diff_reducex(w,rs_wd)
   return 0;
 }
 
-fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr,max_state)
+fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr,max_state,max_level)
 	fsa *fsaptr;
 	storage_type op_table_type;
 	char *tempfilename;
 	char *minstr;
 	int max_state;
+	int max_level;
 { 
 
 // extract wds using minred
@@ -6215,6 +6222,8 @@ int  ***dtable, ne, ngens, ndiff, ns, *fsarow,  nt, cstate, cs, csdiff, csi,
   unsigned int fail_state;
 unsigned int no_fails=0;
 unsigned int no_accepts=0;
+unsigned int no_prev_accepts=0;
+
 Printf("Extracting new word differences from minred and diff2\n");	
     if ((rfile = fopen(minstr,"r")) == 0) {
         fprintf(stderr,"Cannot open file %s.\n",minstr);
@@ -6314,6 +6323,8 @@ Printf("Extracting new word differences from minred and diff2\n");
   int total_hashx=sizeof(int);
   int total_rhs=0;
   int total_equal=0;
+  int currentlevel=0;
+  int maxthislevel=1;
   //boolean first_coincidence=TRUE;
   tmalloc(wa->accepting,int,1);
   wa->num_accepting = 1;
@@ -6322,7 +6333,18 @@ Printf("Extracting new word differences from minred and diff2\n");
     if (max_state>0)
      if (cstate > max_state)
 	break;
-    if (kbm_print_level>1) {
+    if (max_level>0)
+     if (currentlevel > max_level)
+	break;
+    if (cstate>maxthislevel) {
+	maxthislevel=ht.num_recs;
+	currentlevel++;
+	if (no_accepts > 0){
+		Printf("level %d at state %d,accepts %d\n",currentlevel,cstate,no_accepts);
+		no_prev_accepts = no_accepts;
+	}
+    }
+    if (kbm_print_level>1 && no_prev_accepts==no_accepts) {
       if (
           //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
           cstate%50000==0)
@@ -6420,6 +6442,8 @@ Printf("Extracting new word differences from minred and diff2\n");
       if (no_trans_by_wa) {
 	if (accept_state) {
 		fsarow[g1-1] = 1000000000; // make the last state + 1 the accept state
+		//if (no_accepts<20)
+		//	Printf("%d-%d>accept\n",cstate,g1);
 		no_accepts++;
 	}
 	else {
@@ -6447,6 +6471,7 @@ Printf("Extracting new word differences from minred and diff2\n");
       im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
       if (im== -1) return 0;
       fsarow[g1-1] = im; 
+	
       if (max_state > 0)
      	 if (im>max_state) {
       		fsarow[g1-1] = 0; 
@@ -6502,12 +6527,13 @@ Printf("Extracting new word differences from minred and diff2\n");
 
 }
 
-fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state)
+fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state,max_level)
 	fsa *fsaptr;
 	storage_type op_table_type;
 	char *tempfilename;
 	char * wastr; 
 	int max_state;
+	int max_level;
 { int  ***dtable, ne, ngens, ndiff, ns, *fsarow, nt, cstate, cs, csdiff, csi,
        im, i, k, g1, g2, len, identity;
   unsigned short int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
@@ -6524,8 +6550,9 @@ fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state)
   int SEEN_RHS_BETTER = 2;
   int SEEN_EQUAL = 3;
 
+  unsigned int no_accepts=0;
+  unsigned int no_prev_accepts=0;
 
-    unsigned int no_accepts=0;
     Printf("Extracting new word differences from wa and diff2\n");
     if ((rfile = fopen(wastr,"r")) == 0) {
         fprintf(stderr,"Cannot open file %s.\n",wastr);
@@ -6625,11 +6652,24 @@ fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state)
   tmalloc(wa->accepting,int,1);
   wa->num_accepting = 1;
   wa->accepting[1] = 1000000000;
+  int currentlevel=0;
+  int maxthislevel=1;
   while (++cstate <= ht.num_recs) {
     if (max_state>0)
      if (cstate > max_state)
         break;
-    if (kbm_print_level>1) {
+    if (max_level>0)
+     if (currentlevel > max_level)
+	break;
+    if (cstate>maxthislevel) {
+	maxthislevel=ht.num_recs;
+	currentlevel++;
+	if (no_accepts > 0){
+		Printf("level %d at state %d,accepts %d\n",currentlevel,cstate,no_accepts);
+		no_prev_accepts = no_accepts;
+	}
+    }
+    if (kbm_print_level>1 && no_prev_accepts==no_accepts) {
       if (
           //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
           cstate%50000==0)
