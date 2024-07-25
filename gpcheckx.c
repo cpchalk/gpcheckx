@@ -103,6 +103,7 @@ int  make_full_wd_fsax();
 int add_diagonals_to_wd_fsa();
 fsa *fsa_wa_x(); 
 fsa *fsa_extractwdsfromwa(); 
+fsa *fsa_extractwdsfrom_recovery(); 
 fsa *fsa_ex_min(); 
 //fsa  *fsa_minred();
 //fsa  *fsa_minkb();
@@ -489,6 +490,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean restricted_pfxred= FALSE;
   boolean no_filter = FALSE;
   boolean verify = FALSE;
+  boolean recovery = FALSE;
   boolean overview = FALSE;
   boolean dump_files = FALSE;
   boolean dogeowds = FALSE;
@@ -570,6 +572,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   int max_level=0;
 
   int verify_qualifier;
+  int recovery_num;
   kbm_huge = TRUE;
   use_andnotx = FALSE;
   use_andnot = FALSE;
@@ -595,6 +598,14 @@ int main2(argc, argv, read_last_wa,wa_size)
         badusage_gpcheckx(FALSE);
       analyse_diff2(argv[arg]);
       return 0;
+    }
+    else if (strcmp(argv[arg],"-recovery")==0)
+    {
+      arg++;
+      if (arg >= argc)
+        badusage_gpcheckx(FALSE);
+      recovery_num=atoi(argv[arg]);
+      recovery=TRUE;
     }
     else if (strcmp(argv[arg],"-verify")==0)
     {
@@ -1037,11 +1048,17 @@ int main2(argc, argv, read_last_wa,wa_size)
       	//gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
 	if (exmin_command) {
       		//gpwa=fsa_ex_min(diff2,op_store,tempfilename,exminstr);
-      		gpwa2=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state,max_level);
+		if (recovery)
+      			gpwa2=fsa_extractwdsfrom_recovery(diff2,op_store,tempfilename,recovery_num);
+		else
+      			gpwa2=fsa_ex_min(diff2,op_store,tempfilename,inf5,max_state,max_level,0);
 		use_andnot=TRUE;
 	}
 	else if (extractwdsfromwa_command) {
-      		gpwa2=fsa_extractwdsfromwa(diff2diag,op_store,tempfilename,inf4,max_state,max_level);
+		if (recovery)
+      			gpwa2=fsa_extractwdsfrom_recovery(diff2,op_store,tempfilename,recovery_num);
+		else
+      			gpwa2=fsa_extractwdsfromwa(diff2diag,op_store,tempfilename,inf4,max_state,max_level,0);
 		use_andnotx=TRUE;
 	}
 	else {
@@ -6348,7 +6365,7 @@ Printf("Extracting new word differences from minred and diff2\n");
       if (
           //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
           cstate%50000==0)
-       Printf("    #cstate = %d;  number of states = %d, accepts %d\n",cstate,ht.num_recs,no_accepts);
+       Printf("    #cstate = %d;  number of states = %d, level = %d\n",cstate,ht.num_recs, currentlevel);
     }
   ht_ptr_save=ht.current_ptr;
   block_space_save = ht.block_space;
@@ -6673,7 +6690,7 @@ fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state,m
       if (
           //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
           cstate%50000==0)
-       Printf("    #cstate = %d;  number of states = %d, accepts %d\n",cstate,ht.num_recs,no_accepts);
+       Printf("    #cstate = %d;  number of states = %d\n",cstate,ht.num_recs);
     }
     cs_ptr = short_hash_rec(&ht,cstate);
     cs_ptre = short_hash_rec(&ht,cstate) + short_hash_rec_len(&ht,cstate) - 1;
@@ -6882,6 +6899,153 @@ fsa * fsa_extractwdsfromwa (fsaptr, op_table_type,tempfilename,wastr,max_state,m
   fclose(tempfile);
 
   unlink(tempfilename);
+  if (no_accepts>0)
+  	return wa;
+  return NULL;
+}
+fsa * fsa_extractwdsfrom_recovery (fsaptr, op_table_type,tempfilename,recovery_num)
+	fsa *fsaptr;
+	storage_type op_table_type;
+	char *tempfilename;
+        int recovery_num;
+{ int  ***dtable, ne, ngens, ndiff, ns, *fsarow, nt, cstate, cs, csdiff, csi,
+       im, i, k, g1, g2, len, identity;
+  unsigned short int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
+  boolean dense_op, no_trans, no_trans_by_wa, good;
+  char *cf;
+  short_hash_table ht;
+  fsa *wa, *gpwa;
+  FILE *tempfile, *fopen();
+  char fsaname [100];
+  int **watable;
+  int fail_state=0;
+
+  int SEEN_LHS_BETTER = 1;
+  int SEEN_RHS_BETTER = 2;
+  int SEEN_EQUAL = 3;
+
+  unsigned int no_accepts=0;
+  unsigned int no_prev_accepts=0;
+
+    Printf("Recovery!!!!\n");
+
+  if (!fsaptr->flags[DFA]){
+    fprintf(stderr,"Error: fsa_wa only applies to DFA's.\n");
+    return 0;
+  }
+
+  if (fsaptr->alphabet->type != PRODUCT || fsaptr->alphabet->arity != 2) {
+    fprintf(stderr,"Error in fsa_wa: fsa must be 2-variable.\n");
+    return 0;
+  }
+  if (fsaptr->states->type != WORDS) {
+    fprintf(stderr,"Error in fsa_wa: fsa must be word-difference type.\n");
+    return 0;
+  }
+
+  tmalloc(wa,fsa,1);
+  fsa_init(wa);
+  srec_copy(wa->alphabet,fsaptr->alphabet->base);
+  wa->flags[DFA] = TRUE;
+  wa->flags[ACCESSIBLE] = TRUE;
+  wa->flags[BFS] = TRUE;
+
+  ne = fsaptr->alphabet->size;
+  ngens = wa->alphabet->size;
+  ndiff = fsaptr->states->size;
+
+  if (ne != (ngens+1)*(ngens+1)-1) {
+   fprintf(stderr,
+       "Error: in a 2-variable fsa, alphabet size should = ngens^2 - 1.\n");
+    return 0;
+  }
+
+  identity = fsaptr->accepting[1]; /* assumed to be unique */
+  if (fsaptr->num_accepting!=1 || (identity != fsaptr->initial[1])) {
+    fprintf(stderr,"Error: Input to fsa_wa not a word-difference machine.\n");
+    return 0;
+  }
+
+  if (fsaptr->table->table_type!=DENSE) {
+     fprintf(stderr,
+      "Error: function fsa_wa can only be called with a densely-stored fsa.\n");
+     return 0;
+  }
+  dense_op = op_table_type==DENSE;
+  if (fsa_table_dptr_init(fsaptr)== -1) return 0;
+  dtable = fsaptr->table->table_data_dptr;
+
+  wa->states->type = SIMPLE;
+  wa->num_initial = 1;
+  tmalloc(wa->initial,int,2);
+  wa->initial[1] = 1;
+  wa->table->table_type = op_table_type;
+  wa->table->denserows = 0;
+  wa->table->printing_format = op_table_type;
+  
+  if ((tempfile=fopen(tempfilename,"r"))==0){
+    fprintf(stderr,"Error: cannot open file %s\n",tempfilename);
+     return 0;
+  }
+  if (dense_op)
+    tmalloc(fsarow,int,ngens)
+  else
+    tmalloc(fsarow,int,2*ngens+1)
+ 
+  cstate = 0;
+  if (dense_op)
+    len = ngens; /* The length of the fsarow output. */
+  nt = 0; /* Number of transitions in exists */
+  tmalloc(cf,char,ndiff+1);
+  int dollarcount=0;
+  int total_hashx=sizeof(short int);
+  tmalloc(wa->accepting,int,1);
+  wa->num_accepting = 1;
+  wa->accepting[1] = 1000000000;
+  int currentlevel=0;
+  int maxthislevel=1;
+  recovery_num++;
+
+  tfree(fsarow);
+  tfree(cf);
+  if (WADIAG)
+	printf("%d dollar calculations\n",dollarcount);
+
+  wa->table->numTransitions = 9999;
+  wa->accepting[1] = recovery_num;
+
+/* Now read the transition table back in */
+  no_accepts=1;
+  if (no_accepts>0)
+  //compressed_transitions_read(wa,tempfile);
+  {
+  int ns, ne, nt, **table, *tab_ptr, len, i, j;
+
+  wa->states->size=recovery_num;
+  ne = wa->alphabet->size;
+  nt = wa->table->numTransitions;
+  if (wa->table->table_type == DENSE) {
+    size_t s;
+    /* it is a pity that the table was output in transposed form! */
+    fsa_table_init(wa->table, recovery_num, ne);
+    table = wa->table->table_data_ptr;
+    for (i = 1; i <= recovery_num; i++)
+      for (j = 1; j <= ne; j++) {
+	if (i==recovery_num)
+		table[j][i]=0;
+	else
+        	 s = fread((void *)(table[j] + i), sizeof(int), (size_t)1, tempfile);
+        if (*(table[j]+i) == 1000000000)
+                *(table[j]+i)=recovery_num;
+        if (*(table[j]+i) > recovery_num)
+                *(table[j]+i)=0;
+        (void)s; // HACK to silence compiler warning
+      }
+  }
+  } // compressed_transitions
+  fclose(tempfile);
+
+  //unlink(tempfilename);
   if (no_accepts>0)
   	return wa;
   return NULL;
