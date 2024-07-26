@@ -494,6 +494,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean overview = FALSE;
   boolean dump_files = FALSE;
   boolean dogeowds = FALSE;
+  boolean nobigger = FALSE;
   int maxwordlen=MAX_WORD_LEN;
   int minwordlen=1;
   reduction_equation *eqnptr;
@@ -573,12 +574,16 @@ int main2(argc, argv, read_last_wa,wa_size)
 
   int verify_qualifier;
   int recovery_num;
+  int max_diff2_size=0;
   kbm_huge = TRUE;
   use_andnotx = FALSE;
   use_andnot = FALSE;
   while (argc > arg) {
     if (strcmp(argv[arg],"-dogeowds") == 0) {
       dogeowds = TRUE;
+    }
+    else if (strcmp(argv[arg],"-notbigger") == 0) {
+      nobigger = TRUE;
     }
     else if (strcmp(argv[arg], "-to") == 0) {
       arg++;
@@ -596,7 +601,7 @@ int main2(argc, argv, read_last_wa,wa_size)
       arg++;
       if (arg >= argc)
         badusage_gpcheckx(FALSE);
-      analyse_diff2(argv[arg]);
+      analyse_diff2(argv[arg],max_diff2_size);
       return 0;
     }
     else if (strcmp(argv[arg],"-recovery")==0)
@@ -605,6 +610,14 @@ int main2(argc, argv, read_last_wa,wa_size)
       if (arg >= argc)
         badusage_gpcheckx(FALSE);
       recovery_num=atoi(argv[arg]);
+      recovery=TRUE;
+    }
+    else if (strcmp(argv[arg],"-maxdiff2size")==0)
+    {
+      arg++;
+      if (arg >= argc)
+        badusage_gpcheckx(FALSE);
+      max_diff2_size=atoi(argv[arg]);
       recovery=TRUE;
     }
     else if (strcmp(argv[arg],"-verify")==0)
@@ -1014,7 +1027,8 @@ int main2(argc, argv, read_last_wa,wa_size)
   	fsa_read(rfile,diag_diff2,DENSE,0,diag_diff2_max,TRUE,fsaname);
   	fclose(rfile);
   	if (fsa_table_dptr_init(diag_diff2)== -1) return -1;
-  	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,start_diagonals,end_diagonals,limit_diagonals,gpname);
+  	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,
+		start_diagonals,end_diagonals,limit_diagonals,gpname,nobigger);
   	Printf("\ndiff2 with diagonals has %d states\n",diag_diff2->states->size);
 	if (diff2name_command) {
   		strcpy(inf2xx,".diff2"); 
@@ -4088,7 +4102,7 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
 	boolean geodesic;
 	int hashlimit;
 { int  ***dtable, ne, ngens, ndiff, ns, *fsarow, nt, cstate, cs, csdiff, csi,
-       im, i, k, g1, g2, len, identity;
+       im, i, k, g1, g2, len, identity; 
   unsigned short int *ht_ptr, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
   boolean dense_op, no_trans, good;
   char *cf;
@@ -4180,6 +4194,10 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
   if (dense_op)
     len = ngens; /* The length of the fsarow output. */
   nt = 0; /* Number of transitions in exists */
+
+  //tmalloc(cfcount,int,ndiff+1);
+  //for (i=1;i<=ndiff;i++)
+   //   cfcount[i] = 0;
   tmalloc(cf,char,ndiff+1);
   int dollarcount=0;
   int total_hashx=sizeof(short int);
@@ -4325,7 +4343,10 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
         if (k==SEEN_LHS_BETTER)
           *(++ht_ptre) = i;
         else if (k==SEEN_RHS_BETTER)
+	{	             
+	  //cfcount[i]++;
           *(++ht_ptre) = ndiff+i;
+	}
         else if (k==SEEN_EQUAL)
           *(++ht_ptre) = ndiff+ndiff+i;
       }
@@ -4382,9 +4403,13 @@ fsa * fsa_wa_x (fsaptr,op_table_type,tempfilename,geodesic,hashlimit)
 
   unlink(tempfilename);
 
+  //for (i=1;i<=ndiff;i++)
+  //{
+   //   Printf("%d.  %d\n",i,cfcount[i]);
+  //}
   return wa;
 }
-void analyse_diff2(char * gpname)
+void analyse_diff2(char * gpname, int max_size)
 {
   fsa *diff2, *diff1c, *diff2c;
   char inf1 [100];
@@ -4434,6 +4459,29 @@ void analyse_diff2(char * gpname)
   gen **diff2c_list=diff2c->states->words;
   int i,j;
   int count0=0;
+  int size_limit=2;
+  int diff_count;
+  int diffc_count;
+  while (size_limit <= max_size)
+  {
+	diff_count=0;
+	diffc_count=0;
+  	for (i=2;i<= diff2c_size;i++) {
+		if (genstrlen(diff2c_list[i])==size_limit)
+			diffc_count++;
+	}
+		if (diffc_count > 0)
+		{
+  		for (i=2;i<= diff2_size;i++) {
+			if (genstrlen(diff2_list[i])==size_limit)
+				diff_count++;
+		}
+		printf("size %d wds,  %d, %d\n",size_limit,diffc_count, diff_count);
+	}
+	size_limit++;
+  }
+	
+  
   for (i=2;i<= diff2_size;i++) {
 	gen * wd=diff2_list[i];
         boolean found=FALSE;
@@ -5558,7 +5606,8 @@ void write_fsa (fsa_to_print,gpname,postfix,fsaname)
 
 
 //based on  make_full_wd_fsa(wd_fsaptr,inv,start_no,rsptr)
-int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,start,end,limit, gpname)
+int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,
+		check_diagonals,start,end,limit, gpname,nobigger)
 	fsa *wd_fsaptr;
 	int *inv;
         reduction_struct *rsptr;
@@ -5568,6 +5617,7 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,check_diagonals,st
 	int end;
 	int limit;
 	char *gpname;
+	boolean nobigger;
 /* Close the set of word-differences under action g,$, then add all possible
  * new transitions.
  */
@@ -5695,8 +5745,9 @@ Printf("start=%d,end=%d\n",start,end);
    		if (!all_diagonals && (testword[0]==wdn[i][0]))
    		//if (!all_diagonals && (testword[0]==inv[gen1]))
 			continue; 
-	       // if (genstrlen(testword)>genstrlen(wdn[i]))
-			//continue;
+		if (nobigger)
+	        	if (genstrlen(testword)>genstrlen(wdn[i]))
+				continue;
 		j=diff_no(wd_fsaptr,testword);
 		jj=0;
 		if (diff2c) {
