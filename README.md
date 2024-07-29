@@ -313,17 +313,15 @@ h93 can be calculated as follows
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
-Run parts 1 and 2 of the 'add diagonals' script 2 times.
+Run parts 1 and 2 of the 'add diagonals' script three times.
 
-h93.wa will now be smaller (34560 states) but not quite correct.
+h93.wa will now be correct, follow up with
 
 ./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
-./bin/gpcheckx -w -p -v -s 10000 -to 500 h93
 
 ./bin/gpcheckx   -v -p -to 500 h93 +rptz
 
-h93.wa and h93.diff2 will now be correct with 
-34562 and 3292 states respectively
+h93.wa and h93.diff2 will now be correct. 
 
 
 
