@@ -218,8 +218,8 @@ achieved by specifying the -ve option. For example
 
 # Truncating a large word acceptor
 
-If a word acceptor, W, consists of N states, then we can 
-truncate it in memory to a smaller number, N,  of states by treating 
+If a word acceptor, W, consists of M states, then we can 
+truncate it in memory to a smaller number,N(<M),of states by treating 
 all states with number greater than N as fail states of W. 
 
 We specify this by the -s N (or -s 'Base;Increment') switch.
@@ -236,15 +236,13 @@ This observation suggests that adding all possible
 diagonals to a the word difference set might 
 result in the correct word acceptor being built.
 
-The options
+The option pair
 
- -diagonals 'diff2suffix'
-
- -diff2name 'diff2suffix'
+ -diagonals -diff2name 'diff2suffix'
 
 indicates that all possible diagonals are to be 
-added to gpname.diff2'diff2suffix', and
-this enlarged set of word differences is to be used 
+added to gpname.diff2 and saved to gpname.diff2'diff2suffix'.
+This enlarged set of word differences is to be used 
 to build the word acceptor and reduce words in
 subsequent processing.
 
