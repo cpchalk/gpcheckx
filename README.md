@@ -315,7 +315,7 @@ h93 can be calculated as follows
 
 Run parts 1 and 2 of the 'add diagonals' script 2 times.
 
-h93.wa will now be smaler (34560 states) but not quite correct.
+h93.wa will now be smaller (34560 states) but not quite correct.
 
 ./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
 ./bin/gpcheckx -w -p -v -s 10000 -to 500 h93
