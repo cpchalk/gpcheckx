@@ -158,7 +158,7 @@ then be computed as follows.
 ./bin/gpcheckx -geo -v 3572 +rptz
 
 
-h93
+h93 (this requires 8GB of memory)
 
 ./bin/kbprog -wd -t 1500 -me 500000 h93
 
@@ -260,13 +260,14 @@ Example: f29 calculation using diagonals.
 
 # The 'Add Diagonals' script. 
 
-This script has two parts.
+This script has two parts. We use $1 as the variable used
+to contain the group name (gpname).
 
 Part 1 Add diagonals to the current set of word differences,
 store this larger set in gpname.diff2diaggood and build
 a word acceptor based on this which is then stored in gpname.wa2.
 
-./bin/gpcheckx  -diagonals  -diff2name diaggood -v  $1;
+./bin/gpcheckx  -diagonals  -diff2name diaggood -v  $1
 
 cp $1.wa $1.wa2
 
@@ -305,7 +306,7 @@ Run part 2 only of the 'add diagonals' script 2 times, then do
 
 f46.diff2 and f46.wa will now be correct.
 
-2. H93
+2. H93 (this version uses < 2GB of memory)
 
 h93 can be calculated as follows
 
@@ -313,7 +314,16 @@ h93 can be calculated as follows
 
 Run parts 1 and 2 of the 'add diagonals' script two times.
 
-h93.wa will now be correct, follow up with
+But when running part 1 of the script the second time, the first
+line should be changed to read:-
+
+./bin/gpcheckx  -diagonals -notbigger -diff2name diaggood -v h93
+
+The inserted switch -notbigger indicates that only those diagonals
+whose length is the same as the lenth of the word differences 
+that they are a diagonal of will be selected.
+
+h93.wa will now be correct. Follow up with
 
 ./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
 
