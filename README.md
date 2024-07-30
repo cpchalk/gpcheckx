@@ -283,7 +283,7 @@ cp $1.wa2 $1.wa
 
 ./bin/gpcheckx -v -h -andnot $1.wa1 $1.wa2  $1
 
-./bin/gpcheckx -t -to 400 -diff2name diaggood -v $1
+./bin/gpcheckx -t  -diff2name diaggood -v $1
 
 EXAMPLES
 
@@ -311,7 +311,7 @@ h93 can be calculated as follows
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
-Run parts 1 and 2 of the 'add diagonals' script three times.
+Run parts 1 and 2 of the 'add diagonals' script two times.
 
 h93.wa will now be correct, follow up with
 
