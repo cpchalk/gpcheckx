@@ -336,7 +336,7 @@ cp h93.wa2 h93.wa
 ./bin/gpcheckx -tt 1 -lineitems 150 -diff2name diaggood h93
 
 * this causes the scan of lhs words to be split into
-several smaller scand
+several smaller scans.
 
 repeat part 2 as above and abandon (control and C) 
 once h93.diff2 is created with 3149 states.
