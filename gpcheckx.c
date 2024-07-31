@@ -458,7 +458,7 @@ int main1(argc, argv,wa_size)
 		}
 	}
         else if ( !strcmp(argv[1],"-tt") && !strcmp(argv[3],"-lineitems") ) {  
-		outcome=1;
+		outcome=atoi(argv[2]);
 		while (outcome > 0) {
                         char buf1 [100];
 			int x=sprintf(buf1,"%d",outcome);
@@ -564,6 +564,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean diff2name_command = FALSE;
   char *diff2namestr;
   char *usediff2str=NULL;
+  char *prevdiff2str=NULL;
   boolean hashlimit_command = FALSE;
   int hashlimit=0;
   boolean use_wa = FALSE;
@@ -771,6 +772,16 @@ int main2(argc, argv, read_last_wa,wa_size)
       	}
 	hashlimit_command=TRUE;
        hashlimit=atoi(argv[arg]);
+    }
+    else if (strcmp(argv[arg],"-prevdiff2")==0)
+    {
+		arg+=1;
+      	if (arg >= argc)
+      	{
+		printf("-prevdiff2 should be followed by one string\n");
+        	badusage_gpcheckx(FALSE);
+      	}
+	prevdiff2str=argv[arg];
     }
     else if (strcmp(argv[arg],"-usediff2")==0)
     {
@@ -1074,7 +1085,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   	if (fsa_table_dptr_init(diag_diff2)== -1) return -1;
   	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,
 		start_diagonals,end_diagonals,limit_diagonals,gpname,
-		nobigger,diagnostics,min_wd_size);
+		nobigger,diagnostics,min_wd_size,prevdiff2str);
   	Printf("\ndiff2 with diagonals has %d states\n",diag_diff2->states->size);
 	if (diff2name_command) {
   		strcpy(inf2xx,".diff2"); 
@@ -5675,7 +5686,7 @@ void write_fsa (fsa_to_print,gpname,postfix,fsaname)
 
 //based on  make_full_wd_fsa(wd_fsaptr,inv,start_no,rsptr)
 int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,
-		check_diagonals,start,end,limit, gpname,nobigger,diagnostics,min_wd_size)
+		check_diagonals,start,end,limit, gpname,nobigger,diagnostics,min_wd_size,prevdiff2str)
 	fsa *wd_fsaptr;
 	int *inv;
         reduction_struct *rsptr;
@@ -5688,6 +5699,7 @@ int add_diagonals_to_wd_fsa(wd_fsaptr,inv,rsptr,all_diagonals,
 	boolean nobigger;
 	boolean diagnostics;
 	int min_wd_size;
+        char *prevdiff2str;
 /* Close the set of word-differences under action g,$, then add all possible
  * new transitions.
  */
@@ -5710,8 +5722,17 @@ Printf("start=%d,end=%d\n",start,end);
   int * letters;
   fsa *diff2c=NULL;
   fsa *diff2=NULL;
+  fsa *prevdiff2=NULL;
   int total = 0;
   int total_diagonals=0;
+  char fsaname [100];
+  if (prevdiff2str)
+   if ((rfile = fopen(prevdiff2str,"r")) != 0) {
+	Printf("reading %s\n",prevdiff2str);
+  	tmalloc(prevdiff2,fsa,1);
+  	fsa_read(rfile,prevdiff2,DENSE,0,0,TRUE,fsaname);
+  	fclose(rfile);
+   }
   if (check_diagonals || (limit==999999)) {
   tmalloc(cf,char,ns+1);
   for (i=1;i<=ns;i++)
@@ -5725,8 +5746,6 @@ Printf("start=%d,end=%d\n",start,end);
   char inf3 [100];
   strcpy(inf3,gpname);
   strcat(inf3,".diff2c");
-  char fsaname [100];
-
   if ((rfile = fopen(inf3,"r")) != 0) {
 	Printf("reading %s.diff2c\n",gpname);
   	tmalloc(diff2c,fsa,1);
@@ -5822,6 +5841,8 @@ Printf("start=%d,end=%d\n",start,end);
 	        	if (genstrlen(testword)<min_wd_size)
 				continue;
 		j=diff_no(wd_fsaptr,testword);
+		if (prevdiff2 && j==0)
+			j=diff_no(prevdiff2,testword);
 		jj=0;
 		if (diff2c) {
 			jj=diff_no(diff2c,testword);
