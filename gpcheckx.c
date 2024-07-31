@@ -457,6 +457,15 @@ int main1(argc, argv,wa_size)
 			read_last_wa=FALSE;
 		}
 	}
+        else if ( !strcmp(argv[1],"-tt") && !strcmp(argv[3],"-lineitems") ) {  
+		outcome=1;
+		while (outcome > 0) {
+                        char buf1 [100];
+			int x=sprintf(buf1,"%d",outcome);
+			argv[2]=buf1;
+			outcome=main2(argc,argv,FALSE,wa_size);
+		}
+	}
 	else {
 		outcome=main2(argc,argv,FALSE,wa_size);
 	}
@@ -577,6 +586,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 
   int verify_qualifier;
   int recovery_num;
+  int line_items=0;
   int max_diff2_size=0;
   int min_wd_size=0;
   kbm_huge = TRUE;
@@ -610,6 +620,13 @@ int main2(argc, argv, read_last_wa,wa_size)
         badusage_gpcheckx(FALSE);
       analyse_diff2(argv[arg],max_diff2_size,usediff2str);
       return 0;
+    }
+    else if (strcmp(argv[arg],"-lineitems")==0)
+    {
+      arg++;
+      if (arg >= argc)
+        badusage_gpcheckx(FALSE);
+      line_items=atoi(argv[arg]);
     }
     else if (strcmp(argv[arg],"-recovery")==0)
     {
@@ -1648,13 +1665,11 @@ else {
   signal(SIGKILL, interrupt_gpcheckx);
   signal(SIGQUIT, interrupt_gpcheckx);
   int old_diff_size = new_diff2->states->size;
-  int maxl=process_words(fsaandnot_ptr,&rs_wd,&rs_wd2,start_scan_from,
+  int wordnum=process_words(fsaandnot_ptr,&rs_wd,&rs_wd2,start_scan_from,
                 gpwa,new_diff2,inv,no_dots,scale,
 		minwordlen,maxwordlen,trace_equations,
 		&pos_max,use_alt_prestate,verify,verify_qualifier,
-		prefixby1,timeout,use_andnotx);
-  if (maxl>1)
-   printf("\nmaximum word length below bound is %d at %d\n",maxl,pos_max);
+		prefixby1,timeout,use_andnotx,line_items);
   kbm_print_level++;
   if (update_diff2)
   {
@@ -1723,7 +1738,12 @@ else {
   if (dogeowds && (state_limit==0))
 	if (new_diff_size == old_diff_size)
 		exit(99);
-  return new_diff_size - old_diff_size;;
+  if (line_items) {
+        //Printf("reached %d\n",wordnum);
+	return wordnum;
+  }
+  else
+  	return new_diff_size - old_diff_size;;
 }
 
 void free_fsa (fsa * fsa_to_free)
@@ -1936,7 +1956,7 @@ void badusage_gpcheckx(overview)
 int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
                    no_dots,scale,minwordlen, maxwordlen,trace_equations,
 		   pos_max,use_alt_prestate,verify,verify_qualifier,
-			prefixby1,timeout,andnotx)
+			prefixby1,timeout,andnotx,line_items)
 	fsa *fsaptr;
 	reduction_struct *rs_wd;
 	reduction_struct *rs_wd2;
@@ -1956,6 +1976,7 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
 	boolean prefixby1;
 	int timeout;
 	boolean andnotx; //use fsaptr as  wa for onelevelreduced
+        int line_items;
 {
  // partly converted from Alun Williams MAF code
 
@@ -1985,6 +2006,7 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
   gen null_char = 0x0;
   int count_dots=0;
   boolean first_time_display=TRUE;
+  int dotscrosses = 0;
   
   if (fsaptr->num_initial==0)
   {
@@ -2174,6 +2196,11 @@ else
   for (si=start_scan_from;si<nr_states;si+=sample) {
 
       int i,si2=si,ti,j,tix,si2x;
+      if (line_items>0 && dotscrosses>line_items)
+      {
+	PPrintf(" interrupted before %d\n",si);
+	break;
+      }
       end_t=clock();
       total_t=(end_t - start_t) / CLOCKS_PER_SEC;
       if (timeout)
@@ -2189,6 +2216,7 @@ else
 	printf("\nstate %d\n",si);
       if (si%(1+((size_of_dot/sample)*sample))==0) {
 	  count_dots++;
+	  dotscrosses++;
           PPrintf(".");
 	  if (count_dots%50==0)
 		PPrintf("%d",count_dots);
@@ -2431,7 +2459,7 @@ else
 		ignore=1;
 	}
         else if (look_for_diffs(lhs_word,rhs_word,rs_wd,new_states,
-                    new_states_number,si,table_dptr,trace_equations,inv)) {
+                    new_states_number,si,table_dptr,trace_equations,inv,&dotscrosses)) {
               eqn.lhs=lhs_word;
               eqn.rhs=rhs_word;
 	      if (TRACE2)
@@ -2474,6 +2502,8 @@ else
 	  }
 	 } // if not one_level_reducible
    } 
+   if (si==nr_states)
+	si=0;
    end_t=clock();
    total_t=(end_t-start_t)/CLOCKS_PER_SEC;
    PPrintf("\nscan duration=%lds, efficiency fails=%d\n",total_t,fails);
@@ -2504,7 +2534,7 @@ else
   	free(prestates2);
   	free(preletters2);
    }
-   return maximum_length;
+   return si;
 }  
 int verify_word(gen * lhs, fsa *gpwa, int si, int start_reduced)
 {
@@ -2666,7 +2696,7 @@ void display_eqn(state,cwordx,rword,gpletters)
 } 
 
 boolean look_for_diffs(lhs,rhs,rs_wd,new_states,new_states_number,
-                       state,table_dptr,trace_equations,inv)
+                       state,table_dptr,trace_equations,inv,dotscrosses)
  gen *lhs;
  gen *rhs;
  reduction_struct *rs_wd;
@@ -2676,6 +2706,7 @@ boolean look_for_diffs(lhs,rhs,rs_wd,new_states,new_states_number,
  int ***table_dptr;
  boolean trace_equations;
  int *inv;
+ int *dotscrosses;
 {
   // procedure should be called when we know that are new wdiffs to find.
   // Each new wdiff causes table_dptr to be updated.
@@ -2759,6 +2790,7 @@ boolean look_for_diffs(lhs,rhs,rs_wd,new_states,new_states_number,
         {
           int i=0;
           PPrintf("x");
+	  (*dotscrosses)++;
           if (trace_equations) {
               printf( " new word difference %s (%d) ",wdx,xi+1);
 	      int ii=0;
