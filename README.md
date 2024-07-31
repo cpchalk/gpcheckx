@@ -308,28 +308,55 @@ f46.diff2 and f46.wa will now be correct.
 
 2. H93 (this version uses < 2GB of memory)
 
-h93 can be calculated as follows
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
-Run parts 1 and 2 of the 'add diagonals' script two times.
+Run part 1 of the add diagonals script followed by
+part 2 twice. Then run part 1 once more. The 
+word acceptor h93.wa will then be corect. However the
+scripts need some technical adjustments (marked by *) 
+for this to work, and so should appear as
 
-But when running part 1 of the script the second time, the first
-line should be changed to read:-
+( part 1 as normak)
+
+./bin/gpcheckx  -diagonals  -diff2name diaggood -v  h93
+
+cp h93.wa h93.wa2
+
+(part 2 with the last line changed)
+
+./bin/gpcheckx  -waonly -v h93
+
+cp h93.wa h93.wa1
+
+./bin/gpcheckx -v -andnot h93.wa1 h93.wa2 h93
+
+cp h93.wa2 h93.wa
+
+./bin/gpcheckx -tt 1 -lineitems 150 -diff2name diaggood h93
+
+* this causes the scan of lhs words to be split into
+several smaller scand
+
+repeat part 2 as above and abandon (control and C) 
+once h93.diff2 is created with 3149 states.
+
+(part 1 adjusted)
 
 ./bin/gpcheckx  -diagonals -notbigger -diff2name diaggood -v h93
 
-The inserted switch -notbigger indicates that only those diagonals
+* The inserted switch -notbigger indicates that only those diagonals
 whose length is the same as the lenth of the word differences 
 that they are a diagonal of will be selected.
 
-h93.wa will now be correct. Follow up with
+
+h93.wa (34562 states) will now be correct. Follow up with
 
 ./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
 
 ./bin/gpcheckx   -v -p -to 500 h93 +rptz
 
-h93.wa and h93.diff2 will now be correct. 
+h93.wa and h93.diff2 (3292 states) will now be correct. 
 
 
 
