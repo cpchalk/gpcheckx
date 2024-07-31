@@ -401,8 +401,8 @@ The options '-p -s N' require more time and memory.
 The option '-p' with no -s option requires the most
 time and memory of all.
 
-With the exception of the h93 calculation, the examples 
-given here will run with 2 GB of available memory.
+With the exception of the first h93 calculation,
+the examples given here will run with 2 GB of available memory.
 
 # References
 
