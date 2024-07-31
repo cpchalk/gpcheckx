@@ -263,7 +263,7 @@ Example: f29 calculation using diagonals.
 This script has two parts. We use $1 as the variable used
 to contain the group name (gpname).
 
-Part 1 Add diagonals to the current set of word differences,
+Part 1. Add diagonals to the current set of word differences,
 store this larger set in gpname.diff2diaggood and build
 a word acceptor based on this which is then stored in gpname.wa2.
 
@@ -314,8 +314,8 @@ f46.diff2 and f46.wa will now be correct.
 Run part 1 of the add diagonals script followed by
 part 2 twice. Then run part 1 once more. The 
 word acceptor h93.wa will then be corect. However the
-scripts need some technical adjustments (marked by *) 
-for this to work, and so should appear as
+scripts need some technical adjustments for this to work, 
+and so should appear as
 
 ( part 1 as normak)
 
@@ -378,7 +378,19 @@ computer with more memory.
 
 The -to S option stops the scanning lists process after S seconds.
 In addition, a SINGLE Control & C from the keypad will also cause
-the scanning process to stop.
+the scanning process to stop. 
+
+It has been observed that a scan of a large .andnot set of 
+lhs words can be more efficiently and productively scanned 
+by replacing the one large scan by smaller interlinked 
+scans instead. This can be achieved by the leading switches 
+of a scan being 
+
+-tt n -lineitems m
+
+This indicates that the scan, starting at word n, will be carried 
+out by smaller scans each processing at most m of the '.' or 'x' 
+items that are displayed when -v is set.   
 
 For a given N, the '-m -s N' option does the  building a 'triples'
 part with the least memory/processing time requirement. The smaller N is, 
