@@ -151,9 +151,7 @@ then be computed as follows.
 
 ./bin/kbprog -wd -t 1000 -me 200000 3572
 
-./bin/gpcheckx -v -p -s ‘60000;10000’ 3572
-
-./bin/gpcheckx -p -v 3572 +rptz
+./bin/gpcheckx -v -p -s ‘60000;10000’ 3572 +rptz
 
 ./bin/gpcheckx -geo -v 3572 +rptz
 
@@ -198,12 +196,12 @@ calculated as follows.
 
 ./bin/kbprog -wd -t 1000 -me 200000 f46
 
-./bin/gpcheckx -v -p -s ‘4000;1000’ f46
+./bin/gpcheckx -v -p -s ‘4000;1000’ f46 +rptz
 
-./bin/gpcheckx -v -p f46 +rptz
 
-See the 'Add diagonals' section for quicker ways to do the
-above calculations for h93 and f46.
+See the 'Add diagonals' section for quicker and 
+less memory intensive ways to do the automatic
+structure calculations for h93 and f46.
 
 # Proving non-hyperbolicity.
 
@@ -250,11 +248,11 @@ Example: f29 calculation using diagonals.
 
 ./bin/kbprog -wd -t 1000 -me 9000 f29
 
-./bin/gpcheckx -diagonals -diff2name diaggoody  f29
+./bin/gpcheckx -diagonals -diff2name diaggood f29
 
 'f29.wa now correct'
 
-./bin/gpcheckx -p -diff2name diaggoody -w +rptz
+./bin/gpcheckx -p -diff2name diaggood -w +rptz
 
 'f29.diff2 now correct'
 
@@ -282,7 +280,7 @@ cp $1.wa $1.wa1
 
 cp $1.wa2 $1.wa
 
-./bin/gpcheckx -v -h -andnot $1.wa1 $1.wa2  $1
+./bin/gpcheckx -v  -andnot $1.wa1 $1.wa2  $1
 
 ./bin/gpcheckx -t  -diff2name diaggood -v $1
 
@@ -306,8 +304,8 @@ Run part 2 only of the 'add diagonals' script 2 times, then do
 
 f46.diff2 and f46.wa will now be correct.
 
-2. H93 (this version uses < 2GB of memory)
 
+2. h93 (this calculation uses < 2GB of memory)
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
@@ -336,7 +334,8 @@ cp h93.wa2 h93.wa
 ./bin/gpcheckx -tt 1 -lineitems 150 -diff2name diaggood h93
 
 * this causes the scan of lhs words to be split into
-several smaller scans.
+several smaller scans. For further explanation see the
+Minimising time and memory requirementssection below.
 
 repeat part 2 as above and abandon (control and C) 
 once h93.diff2 is created with 3149 states.
@@ -346,7 +345,7 @@ once h93.diff2 is created with 3149 states.
 ./bin/gpcheckx  -diagonals -notbigger -diff2name diaggood -v h93
 
 * The inserted switch -notbigger indicates that only those diagonals
-whose length is the same as the lenth of the word differences 
+whose length is the same as the length of the word differences 
 that they are a diagonal of will be selected.
 
 
@@ -389,10 +388,10 @@ of a scan being
 -tt n -lineitems m
 
 This indicates that the scan, starting at word n, will be carried 
-out by smaller scans each processing at most m of the '.' or 'x' 
+out by smaller scans each one processing at most m of the '.' or 'x' 
 items that are displayed when -v is set.   
 
-For a given N, the '-m -s N' option does the  building a 'triples'
+For a given N, the '-m -s N' option does the  building of a 'triples'
 part with the least memory/processing time requirement. The smaller N is, 
 the smaller the processing time and memory requirements will be.
 But if N is too small then no new word differences will be found.
