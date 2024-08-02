@@ -317,13 +317,13 @@ and so should appear as
 
 ( part 1 as normak)
 
-./bin/gpcheckx  -diagonals  -diff2name diaggood -v  h93
+./bin/gpcheckx  -diagonals  -diff2name diaggood -v h93
 
 cp h93.wa h93.wa2
 
 (part 2 with the last line changed)
 
-./bin/gpcheckx  -waonly -v h93
+./bin/gpcheckx -waonly -v h93
 
 cp h93.wa h93.wa1
 
@@ -331,31 +331,44 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 150 -diff2name diaggood h93
+./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diaggood h93
 
 * this causes the scan of lhs words to be split into
-several smaller scans. For further explanation see the
-Minimising time and memory requirementssection below.
+several smaller scans. 
 
-repeat part 2 as above and abandon (control and C) 
-once h93.diff2 is created with 3149 states.
+repeat part 2  
 
-(part 1 adjusted)
+./bin/gpcheckx -waonly -v h93
 
-./bin/gpcheckx  -diagonals -notbigger -diff2name diaggood -v h93
+cp h93.wa h93.wa1
+
+./bin/gpcheckx -v -andnot h93.wa1 h93.wa2 h93
+
+cp h93.wa2 h93.wa
+
+./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood h93
+
+
+(do part 1 adjusted as shown)
+
+./bin/gpcheckx  -diagonals -prevdiff2 h93.diff2diagood 
+           
+-notbigger -diff2name diaggood -v h93
 
 * The inserted switch -notbigger indicates that only those diagonals
 whose length is the same as the length of the word differences 
-that they are a diagonal of will be selected.
+that they are a diagonal of will be selected, while 
+-prevdiff2 'filename' indicates that only diagonals 
+not belonging to the specified file are to be added.
 
 
-h93.wa (34562 states) will now be correct. Follow up with
+h93.wa  will now be correct. Follow up with
 
 ./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
 
-./bin/gpcheckx   -v -p -to 500 h93 +rptz
+./bin/gpcheckx -v -p -to 500 h93 +rptz
 
-h93.wa and h93.diff2 (3292 states) will now be correct. 
+h93.wa and h93.diff2 will now be correct. 
 
 
 
@@ -378,18 +391,6 @@ computer with more memory.
 The -to S option stops the scanning lists process after S seconds.
 In addition, a SINGLE Control & C from the keypad will also cause
 the scanning process to stop. 
-
-It has been observed that a scan of a large .andnot set of 
-lhs words can be more efficiently and productively scanned 
-by replacing the one large scan by smaller interlinked 
-scans instead. This can be achieved by the leading switches 
-of a scan being 
-
--tt n -lineitems m
-
-This indicates that the scan, starting at word n, will be carried 
-out by smaller scans each one processing at most m of the '.' or 'x' 
-items that are displayed when -v is set.   
 
 For a given N, the '-m -s N' option does the  building of a 'triples'
 part with the least memory/processing time requirement. The smaller N is, 
