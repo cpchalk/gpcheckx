@@ -315,7 +315,7 @@ word acceptor h93.wa will then be corect. However the
 scripts need some technical adjustments for this to work, 
 and so should appear as
 
-( part 1 as normak)
+( part 1 as normal)
 
 ./bin/gpcheckx  -diagonals  -diff2name diaggood -v h93
 
@@ -349,7 +349,7 @@ cp h93.wa2 h93.wa
 ./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood h93
 
 
-(do part 1 adjusted as shown)
+(do part 1 again, adjusted as shown)
 
 ./bin/gpcheckx  -diagonals -prevdiff2 h93.diff2diagood 
            
