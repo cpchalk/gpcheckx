@@ -457,13 +457,19 @@ int main1(argc, argv,wa_size)
 			read_last_wa=FALSE;
 		}
 	}
-        else if ( !strcmp(argv[1],"-tt") && !strcmp(argv[3],"-lineitems") ) {  
+        else if ( argc>5 && !strcmp(argv[1],"-tt") && !strcmp(argv[3],"-lineitems") ) {  
 		outcome=atoi(argv[2]);
+		int repeats=atoi(argv[5]);
+	        int cycle=1;
 		while (outcome > 0) {
+			Printf("Cycle %d\n",++cycle);
+			repeats--;
                         char buf1 [100];
 			int x=sprintf(buf1,"%d",outcome);
 			argv[2]=buf1;
 			outcome=main2(argc,argv,FALSE,wa_size);
+			if (repeats == 0)
+				break;
 		}
 	}
 	else {
@@ -624,10 +630,11 @@ int main2(argc, argv, read_last_wa,wa_size)
     }
     else if (strcmp(argv[arg],"-lineitems")==0)
     {
-      arg++;
+      arg+=2;
       if (arg >= argc)
         badusage_gpcheckx(FALSE);
-      line_items=atoi(argv[arg]);
+      line_items=atoi(argv[arg-1]);
+      // repeats is used in main1 
     }
     else if (strcmp(argv[arg],"-recovery")==0)
     {
@@ -2167,7 +2174,9 @@ int process_words (fsaptr,rs_wd,rs_wd2,start_scan_from,gpwa,new_diff2,inv,
  // determine how many dots will be displayed
   if (start_scan_from > nr_states)
 	start_scan_from=1;
-  if (no_dots < 0) {
+  if (line_items > 0)
+	sample=1;
+  else if (no_dots < 0) {
       int total_states = no_dots * -size_of_dot;
       sample=1;
       if (total_states < (nr_states-start_scan_from))
@@ -2217,6 +2226,7 @@ else
       if (timeout)
 	      if (total_t>timeout) {
 		 PPrintf("\ntimeout of scan at word %d\n",si);
+		 si=nr_states;
 		 break; 
 	      }
       if (gpcheckx_onintr) {
