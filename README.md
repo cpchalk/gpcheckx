@@ -305,7 +305,9 @@ Run part 2 only of the 'add diagonals' script 2 times, then do
 f46.diff2 and f46.wa will now be correct.
 
 
-2. h93 (this calculation uses < 2GB of memory)
+2. h93 
+
+(this calculation uses < 2GB of memory)
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
@@ -331,7 +333,7 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diaggood h93
+./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diaggood -noalt h93
 
 * this causes the scan of lhs words to be split into
 several smaller scans. 
@@ -346,7 +348,7 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood h93
+./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood -noalt h93
 
 
 (do part 1 again, adjusted as shown)
@@ -364,9 +366,9 @@ not belonging to the specified file are to be added.
 
 h93.wa  will now be correct. Follow up with
 
-./bin/gpcheckx -w -diff2name diaggood -v -m -to 500 h93 +rptz
+./bin/gpcheckx -w -diff2name diaggood -v -m -noalt h93 
 
-./bin/gpcheckx -v -p -to 500 h93 +rptz
+./bin/gpcheckx -v -p -noalt -to 200 h93 +wrptz
 
 h93.wa and h93.diff2 will now be correct. 
 
