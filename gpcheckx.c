@@ -462,7 +462,7 @@ int main1(argc, argv,wa_size)
 		int repeats=atoi(argv[5]);
 	        int cycle=1;
 		while (outcome > 0) {
-			Printf("Cycle %d\n",++cycle);
+			Printf("\n ***\n Cycle %d\n ***\n",++cycle);
 			repeats--;
                         char buf1 [100];
 			int x=sprintf(buf1,"%d",outcome);
