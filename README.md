@@ -333,7 +333,7 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diaggood -noalt h93
+./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diaggood  h93
 
 * this causes the scan of lhs words to be split into
 several smaller scans. 
@@ -348,7 +348,7 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood -noalt h93
+./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood  h93
 
 
 (do part 1 again, adjusted as shown)
@@ -360,15 +360,15 @@ cp h93.wa2 h93.wa
 * The inserted switch -notbigger indicates that only those diagonals
 whose length is the same as the length of the word differences 
 that they are a diagonal of will be selected, while 
--prevdiff2 'filename' indicates that only diagonals 
-not belonging to the specified file are to be added.
+-prevdiff2 'suffix' indicates that only diagonals 
+not belonging to the gpname.diff2'suffix' are to be added.
 
 
 h93.wa  will now be correct. Follow up with
 
-./bin/gpcheckx -w -diff2name diaggood -v -m -noalt h93 
+./bin/gpcheckx -w -diff2name diaggood -v -m  h93 
 
-./bin/gpcheckx -v -p -noalt -to 200 h93 +wrptz
+./bin/gpcheckx -v -p  -to 200 h93 +wrptz
 
 h93.wa and h93.diff2 will now be correct. 
 
