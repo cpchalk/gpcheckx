@@ -4,7 +4,7 @@
 #define STATE_LIMIT 0
 #define CALC_GEODIFF 0 // in geo mode calculate the optimal size of diff2
 		       // that produces correct geowa
-#define USEALT 1 // try to reduce duplicates by alternative prestate routes
+#define USEALT 0 // try to reduce duplicates by alternative prestate routes
 #define NOMINMZ 1 // dont minimize the minred fsa
 #define NOEXMZ 1 // dont minimize the exists fsa'
 #define MZBH   0 // use fsa_minimize_big_hash instead of fsa_minimize
@@ -1090,6 +1090,14 @@ int main2(argc, argv, read_last_wa,wa_size)
   	fsa_read(rfile,diag_diff2,DENSE,0,diag_diff2_max,TRUE,fsaname);
   	fclose(rfile);
   	if (fsa_table_dptr_init(diag_diff2)== -1) return -1;
+        
+	if (prevdiff2str)
+	{
+  		strcpy(inf2xx,gpname); 
+  		strcat(inf2xx,".diff2"); 
+  		strcat(inf2xx,prevdiff2str); 
+		prevdiff2str=inf2xx;
+	}
   	add_diagonals_to_wd_fsa(diag_diff2,inv,&rs_wd,all_diagonals,check_diagonals,
 		start_diagonals,end_diagonals,limit_diagonals,gpname,
 		nobigger,diagnostics,min_wd_size,prevdiff2str);
