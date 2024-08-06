@@ -353,9 +353,8 @@ cp h93.wa2 h93.wa
 
 (do part 1 again, adjusted as shown)
 
-./bin/gpcheckx  -diagonals -prevdiff2 h93.diff2diagood 
-           
--notbigger -diff2name diaggood -v h93
+./bin/gpcheckx  -diagonals -prevdiff2 diaggood 
+           -notbigger -diff2name diaggood -v h93
 
 * The inserted switch -notbigger indicates that only those diagonals
 whose length is the same as the length of the word differences 
