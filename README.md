@@ -156,7 +156,7 @@ then be computed as follows.
 ./bin/gpcheckx -geo -v 3572 +rptz
 
 
-h93 (this requires 8GB of memory)
+h93 (this calculation requires 8GB of memory)
 
 ./bin/kbprog -wd -t 1500 -me 500000 h93
 
@@ -234,12 +234,15 @@ This observation suggests that adding all possible
 diagonals to a the word difference set might 
 result in the correct word acceptor being built.
 
-The option pair
+The options
 
- -diagonals -diff2name 'diff2suffix'
+ -diagonals -diff2name 'suffix1' -prevdiff2 'suffix2'
 
-indicates that all possible diagonals are to be 
-added to gpname.diff2 and saved to gpname.diff2'diff2suffix'.
+indicate that all possible diagonals are to be 
+added to gpname.diff2 and saved to gpname.diff2'diff2suffix1'
+with the exception of any diagonals that also happen
+to be present in gpname.diff2'suffix2'.
+
 This enlarged set of word differences is to be used 
 to build the word acceptor and reduce words in
 subsequent processing.
@@ -248,11 +251,11 @@ Example: f29 calculation using diagonals.
 
 ./bin/kbprog -wd -t 1000 -me 9000 f29
 
-./bin/gpcheckx -diagonals -diff2name diaggood f29
+./bin/gpcheckx -diagonals -diff2name diags f29
 
 'f29.wa now correct'
 
-./bin/gpcheckx -p -diff2name diaggood -w +rptz
+./bin/gpcheckx -p -diff2name diags -w +rptz
 
 'f29.diff2 now correct'
 
@@ -262,10 +265,12 @@ This script has two parts. We use $1 as the variable used
 to contain the group name (gpname).
 
 Part 1. Add diagonals to the current set of word differences,
-store this larger set in gpname.diff2diaggood and build
-a word acceptor based on this which is then stored in gpname.wa2.
+and store this larger set in gpname.diff2diags - but dont
+include any diagonals present in any existing file
+gpname.diff2diags - then build a word acceptor based on this 
+which is then stored in gpname.wa2.
 
-./bin/gpcheckx  -diagonals  -diff2name diaggood -v  $1
+./bin/gpcheckx -diagonals -diff2name diags -prevdiff2 diags -v $1
 
 cp $1.wa $1.wa2
 
@@ -274,7 +279,7 @@ gpname.diff2, place this in gpname.wa1, then extract
 word differences from the differences found between the
 word acceptors gpname.wa1 and gpname.wa2.
 
-./bin/gpcheckx  -waonly  -v  $1
+./bin/gpcheckx  -waonly  -v $1
 
 cp $1.wa $1.wa1
 
@@ -282,7 +287,7 @@ cp $1.wa2 $1.wa
 
 ./bin/gpcheckx -v  -andnot $1.wa1 $1.wa2  $1
 
-./bin/gpcheckx -t  -diff2name diaggood -v $1
+./bin/gpcheckx -t  -diff2name diags -v $1
 
 EXAMPLES
 
@@ -292,15 +297,15 @@ F(4,6) can be calculated using the following 'recipe':-
 
 ./bin/kbprog -wd -t 1000 -me 60000 f46
 
-Run parts 1 and 2 of the 'add diagonals' script 3 times.
+Run parts 1 and 2 of the 'add diagonals' script four times.
 
-Run part 2 only of the 'add diagonals' script 2 times, then do
+ then do
 
-./bin/gpcheckx -v -w -diff2name diaggood -m -s 80000 f46
+./bin/gpcheckx -v -w -diff2name diags -m -s 40000 f46
 
-./bin/gpcheckx -v -m f46 +rptz
+./bin/gpcheckx -v -m -s '60000;20000' f46 +rptz
 
-./bin/gpcheckx -v -p f46 +rptz
+./bin/gpcheckx -v -p f46 +wrptz
 
 f46.diff2 and f46.wa will now be correct.
 
@@ -311,19 +316,19 @@ f46.diff2 and f46.wa will now be correct.
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
-Run part 1 of the add diagonals script followed by
-part 2 twice. Then run part 1 once more. The 
-word acceptor h93.wa will then be corect. However the
-scripts need some technical adjustments for this to work, 
-and so should appear as
+Run parts 1 and 2 of the add diagonals script twice. 
+Then run part 1 once more. The word acceptor h93.wa 
+will then be corect. 
+However, the scripts need some adjustments for this 
+to work, and should appear as
 
-( part 1 as normal)
+(part 1)
 
-./bin/gpcheckx  -diagonals  -diff2name diaggood -v h93
+./bin/gpcheckx  -diagonals  -diff2name diags -v h93
 
 cp h93.wa h93.wa2
 
-(part 2 with the last line changed)
+(part 2)
 
 ./bin/gpcheckx -waonly -v h93
 
@@ -333,12 +338,13 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diaggood  h93
+./bin/gpcheckx -tt 1 -lineitems 150 0 -diff2name diags h93
 
-* this causes the scan of lhs words to be split into
-several smaller scans. 
+(the scan of the lhs words will be split into
+several smaller scans, each processing a line 
+of output at a time)
 
-repeat part 2  
+(repeat part 2)  
 
 ./bin/gpcheckx -waonly -v h93
 
@@ -348,24 +354,23 @@ cp h93.wa h93.wa1
 
 cp h93.wa2 h93.wa
 
-./bin/gpcheckx -tt 1 -lineitems 100 1 -v  -diff2name diaggood  h93
+(process just 1 line of output)
 
+./bin/gpcheckx -tt 1 -lineitems 100 1 
+                 -v -diff2name diags h93
 
-(do part 1 again, adjusted as shown)
+(do part 1 again)
 
-./bin/gpcheckx  -diagonals -prevdiff2 diaggood 
-           -notbigger -diff2name diaggood -v h93
+./bin/gpcheckx  -diagonals -prevdiff2 diags 
+           -notbigger -diff2name diags -v h93
 
-* The inserted switch -notbigger indicates that only those diagonals
-whose length is the same as the length of the word differences 
-that they are a diagonal of will be selected, while 
--prevdiff2 'suffix' indicates that only diagonals 
-not belonging to the gpname.diff2'suffix' are to be added.
+(The switch -notbigger indicates that only those diagonals 
+whose length is the same as the length of the word 
+differences that they are a diagonal of will be selected.
 
+h93.wa will now be correct. Follow up with,
 
-h93.wa  will now be correct. Follow up with
-
-./bin/gpcheckx -w -diff2name diaggood -v -m  h93 
+./bin/gpcheckx -w -diff2name diags -v -m  h93 
 
 ./bin/gpcheckx -v -p  -to 200 h93 +wrptz
 
