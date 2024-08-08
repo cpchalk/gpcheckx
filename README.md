@@ -366,7 +366,7 @@ cp h93.wa2 h93.wa
 
 (The switch -notbigger indicates that only those diagonals 
 whose length is the same as the length of the word 
-differences that they are a diagonal of will be selected.
+differences that they are a diagonal of will be selected.)
 
 h93.wa will now be correct. Follow up with,
 
