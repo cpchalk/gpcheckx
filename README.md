@@ -316,9 +316,9 @@ f46.diff2 and f46.wa will now be correct.
 
 ./bin/kbprog -wd -t 1000 -me 50000 h93
 
-Run parts 1 and 2 of the add diagonals script twice. 
-Then run part 1 once more. The word acceptor h93.wa 
-will then be corect. 
+Run parts 1 and 2 of the add diagonals script. Then 
+run part 2 a second time. Run part 1 once more. 
+The word acceptor h93.wa  will then be corect. 
 However, the scripts need some adjustments for this 
 to work, and should appear as
 
