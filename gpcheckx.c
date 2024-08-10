@@ -2487,6 +2487,9 @@ else
 		//bug in gpwa (kbprog, maf or fsa_wa_x?)
 		ignore=1;
 	}
+//	else if ((genstrlen(lhs_word)==genstrlen(rhs_word)+2) && (lhs_word[0]>rhs_word[0]))
+		//lhs_word isnt prefix reduced!
+		//ignore=1;
         else if (look_for_diffs(lhs_word,rhs_word,rs_wd,new_states,
                     new_states_number,si,table_dptr,trace_equations,inv,&dotscrosses)) {
               eqn.lhs=lhs_word;
@@ -3561,7 +3564,7 @@ void do_andnot (fsafile1,fsafile2,gp)
         fsa_read(rfile,fsa2,DENSE,0,0,TRUE,fsaname);
         fclose(rfile);
 
-	printf("doing fsa_andnot on %s and %s\n",fsafile1,fsafile2);
+	Printf("doing fsa_andnot on %s and %s\n",fsafile1,fsafile2);
         if (fsa1->states->size != fsa2->states->size) {
             strcpy(tempfilename,gp);
             strcat(tempfilename,"temp_XXX");
@@ -3569,20 +3572,21 @@ void do_andnot (fsafile1,fsafile2,gp)
             strcat(fsaname,".andnot");
             strcpy(filename,gp);
             strcat(filename,".andnot");
-            if (!fsa1->accepting)
+            /*if (!fsa1->accepting)
                 // convert fail state to accepting state
                 fsa1 = fsa_pfxred(fsa1,op_store,tempfilename,0);
             if (!fsa2->accepting)
                 // convert fail state to accepting state
                 fsa2 = fsa_pfxred(fsa2,op_store,tempfilename,0);
-
-            fsaandnot = fsa_and_not_first(fsa2,fsa1,op_store,TRUE,tempfilename,0);
-            //fsaandnot = fsa_and_not(fsa1,fsa2,op_store,TRUE,tempfilename);
-            printf("writing %s, states=%d\n",filename,fsaandnot->states->size);
+	   */
+            //fsaandnot = fsa_and_not_first(fsa2,fsa1,op_store,TRUE,tempfilename,0);
+            //fsaandnot = fsa_and_not(fsa2,fsa1,op_store,TRUE,tempfilename);
+            fsaandnot = fsa_and_not(fsa1,fsa2,op_store,TRUE,tempfilename);
+            Printf("writing %s, states=%d\n",filename,fsaandnot->states->size);
             wfile = fopen(filename,"w");
             fsa_print(wfile,fsaandnot,fsaname);
             fclose(wfile);
-	    printf("scan using 'gpcheckx -t %s\n",gp);	
+	    Printf("scan using 'gpcheckx -t %s\n",gp);	
          }
 }
 
@@ -5870,6 +5874,10 @@ Printf("start=%d,end=%d\n",start,end);
 			    else
 			  	j=99; //pretend weve already got  a spurious wd
 			}
+			/*else if (limit==999999)
+			{
+				if (jj==2725)	printf(" %d from %d^-1 on wd %d\n",jj,gen1,i);
+			}*/
 		}
 	        if (check_diagonals && j>0 && j<=ns) {
 			if (xxx==0 || (j>xxx && i<=xxx)) {
