@@ -1,0 +1,1050 @@
+/* wordreduce.c 1/11/94.
+ * 6/11/99 re-introduce option to input list of words from filename.
+ *         also added -e option (expanded) to output expanded powers.
+ * 6/8/98 large scale reorganisation to omit globals, etc.
+ * 5/2/98 change generators from type char to type `gen'.
+ *
+ * 15/3/96 - amalgamated with wordreducecos.c, which was specially written
+ * for reducing cosets using a word-difference machines.
+ * There is now a -cos option, which means reduce cosets (using either
+ * a rewriting system or a word-difference machine).
+ * For coset reduction using a rewrting system, the word to be reduced can
+ * contain any of available symbols, but to make sense (for H subgroup of G), 
+ * it should either be a word in the G-generators alone, or a word in the
+ * H-generators alone, or a word of form H-word*_H*G-word.
+ * For coset reduction using a word-difference machine, the word to be
+ * reduced must either be in the G-generators alone, or have form _H*G-word.
+ *
+ * Input of words from a filename specified on command line no longer works.
+ *
+ * 18/1/95 - added options to reduce words using rewriting system.
+ * Reduce words using a rewriting system or a word-difference machine.
+ *
+ * SYNOPSIS:
+ *    wordreduce [-kbprog/-diff1/-diff2/-diff1c] [-mrl maxreducelen] [-e]
+ *			   	 [-cos] groupname [cosname] [-f filename]
+ *
+ * If -cos is false: 
+ * Input is from groupname.kbprog, groupname.diff1, groupname.diff2 or
+ * groupname.diff1c, and stdin.
+ *
+ * If -cos is true: 
+ * cosname defaults to "cos"
+ * Input is from groupname.cosname.kbprog, groupname.cosname.midiff1,
+ * groupname.cosname.midiff2, and stdin (unless -f filename is used).
+ *
+ * Output is to stdout (unless -f filename is used).
+ *
+ * If the optional "-f filename" argument is present, then the file filename
+ * should contain an assignment of a list of words to be reduced
+ * (e.g. words := [a^3,(a*b)^7];), and output will be a list of reduced words
+ * to filename.reduced.
+ *
+ * OPTIONS:
+ * -cos		If set reduce cosets. This changes i/o files.
+ *
+ * -kbprog/diff1/diff2/diff1c
+ *		This determines which finite state automaton is used for
+ *		the word-reduction.
+ *		If the kbprog flag is called, then a rewriting system is
+ *		input from groupname.kbprog
+ *				(or, if -cos, groupname.cosname.kbprog).
+ *		Otherwise, a word-difference machine is input from the
+ *		appropriate file.
+ *		The default is groupname.kbprog if that file is present,
+ *		and otherwise groupname.diff2.
+ *		
+ * Words are input interactively to stdin and output to stdout.
+ */
+
+#include <stdio.h>
+#include "defs.h"
+#include "fsa.h"
+#include "rws.h"
+#include "definitions.h"
+
+#include "externals.h"
+
+#define MAXV 65536 /* The maximum number of vertices allowed. */
+#define MAXEQNS         32767
+#define MAXREDUCELEN    32767
+
+static FILE *rfile, *wfile;
+
+void  badusage_wordreduce();
+int   diff_reducex();
+
+/* Functions defined in other files used in this file */
+//void  read_kbinput_simple();
+//void  fsa_read();
+//int   fsa_table_dptr_init();
+//boolean  read_word();
+//int   diff_reduce();
+//int   diff_reduce_cos();
+//int   rws_reduce();
+//int   add_word_to_buffer();
+//int   add_expanded_word_to_buffer();
+//void  read_ident();
+//void  read_delim();
+//void  check_next_char();
+//void  printbuffer();
+//void  process_names();
+//void  fsa_clear();
+//int   stringlen();
+//int   genstrlen();
+
+main(argc, argv)
+        int             argc;
+        char           *argv[];
+{ int delim, arg, num_gens, i;
+  char gpname[100], cosgpname[100], inf1[100], fsaname[100],
+       inf2[100], outf[100];
+  boolean rws_ip, diff1_ip, diff2_ip, diff1c_ip, file_ip, expwds, open, first;
+  boolean cosets=FALSE;
+  rewriting_system rws;
+  rewriting_system *rwsptr;
+  reduction_struct rs;
+  int (*reduce_word)();
+  boolean seengpname, seencosname, use_diff_reduce1level,readit;
+  gen 	*gen_word;
+  char **gen_names,*reducethis;
+  int ***table_dptr, ngens1, diff_size, * data_area;
+
+  setbuf(stdout,(char*)0);
+  setbuf(stderr,(char*)0);
+
+  rwsptr= &rws;
+  rwsptr->maxeqns = MAXEQNS;
+  rwsptr->maxreducelen = MAXREDUCELEN;
+  rwsptr->inv_of=0;
+  rwsptr->weight=0;rwsptr->level=0;rwsptr->history=0;
+  rwsptr->slowhistory=0;rwsptr->slowhistorysp=0;
+  rwsptr->preflen=0;rwsptr->prefno=0;
+  rs.rws=rwsptr;
+  gpname[0] = '\0';
+  arg = 1;
+  rws_ip = diff1_ip = diff2_ip = diff1c_ip = file_ip = expwds = FALSE;
+  seengpname=seencosname=use_diff_reduce1level=FALSE;
+  fsa wa;
+  int **watable;
+  while (argc > arg) {
+    if (strcmp(argv[arg],"-cos")==0)
+      cosets = TRUE;
+    else if (strcmp(argv[arg],"-kbprog")==0)
+      rws_ip = TRUE;
+    else if (strcmp(argv[arg],"-diff1")==0)
+      diff1_ip = TRUE;
+    else if (strcmp(argv[arg],"-diff2")==0)
+      diff2_ip = TRUE;
+    else if (strcmp(argv[arg],"-diff1c")==0)
+      diff1c_ip = TRUE;
+    else if (strcmp(argv[arg],"-e")==0)
+      expwds = TRUE;
+    else if (strcmp(argv[arg], "-mrl") == 0) {
+      rwsptr->maxreducelenset = TRUE;
+      arg++;
+      if (arg >= argc)
+        badusage_wordreduce();
+      rwsptr->maxreducelen = atoi(argv[arg]);
+    }
+    else if (strcmp(argv[arg],"-f")==0) {
+      file_ip = TRUE;
+      arg++;
+      if (arg >= argc)
+        badusage_wordreduce();
+      strcpy(inf2,argv[arg]);
+      strcpy(outf,inf2); strcat(outf,".reduced");
+    }
+    else if (argv[arg][0] == '-')
+      badusage_wordreduce();
+    else if (!seengpname) {
+      seengpname=TRUE;
+      strcpy(gpname,argv[arg]);
+    }
+    else if (!seencosname) {
+      seencosname=TRUE;
+      sprintf(cosgpname,"%s.%s",gpname,argv[arg]);
+    }
+    else
+      badusage_wordreduce();
+
+    arg++;
+  }
+
+  if (!seengpname)
+    badusage_wordreduce();
+  if (cosets && !seencosname)
+    sprintf(cosgpname,"%s.cos",gpname);
+
+  if (cosets) strcpy(inf1,cosgpname);
+  else strcpy(inf1,gpname);
+
+  rwsptr->maxreducelen *= 2;
+      /* Since rws-reduction returns when half of this length is exceeded. */
+  open = FALSE;
+  if (rws_ip)
+    strcat(inf1,".kbprog");
+  else if (diff1_ip)
+    {if (cosets) strcat(inf1,".midiff1");else strcat(inf1,".diff1");}
+  else if (diff2_ip)
+    {if (cosets) strcat(inf1,".midiff2");else strcat(inf1,".diff2");}
+  else if (diff1c_ip) {
+    if (cosets) {
+      fprintf(stderr,"Sorry, diff1c coset reduction is not yet supported.\n");
+      exit(1);
+    }
+    strcat(inf1,".diff1c");
+  }
+  else {
+    strcat(inf1,".kbprog");
+    if (rfile = fopen(inf1,"r")) {
+      rws_ip = TRUE;
+      open = TRUE;
+    }
+    else {
+      diff2_ip = TRUE;
+      if (cosets)
+        {strcpy(inf1,cosgpname); strcat(inf1,".midiff2");}
+      else
+        {strcpy(inf1,gpname); strcat(inf1,".diff2");}
+    }
+  }
+
+  if (!open) 
+    if ((rfile = fopen(inf1,"r")) == 0) {
+      fprintf(stderr,"Cannot open file %s.\n",inf1);
+      exit(1);
+    }
+ 
+  if (rws_ip) {
+    rwsptr->cosets=cosets;
+    tmalloc(rwsptr->reduction_fsa,fsa,1);
+    read_kbinput_simple(rfile,FALSE,rwsptr);
+    fclose(rfile);
+    if (cosets) strcpy(inf1,cosgpname);
+    else strcpy(inf1,gpname);
+    strcat(inf1,".reduce");
+    if ((rfile = fopen(inf1,"r")) == 0) {
+      fprintf(stderr,"Cannot open file %s.\n",inf1);
+      exit(1);
+    }
+    fsa_read(rfile,rwsptr->reduction_fsa,DENSE,0,0,TRUE,fsaname);
+    fclose(rfile);
+    num_gens = rws.num_gens;
+    gen_names = rws.gen_name;
+    process_names(gen_names,num_gens);
+    tmalloc(rws.history,int,rwsptr->maxreducelen+1);
+  }
+  else {
+    tmalloc(rs.wd_fsa,fsa,1);
+    fsa_read(rfile,rs.wd_fsa,DENSE,0,0,TRUE,fsaname);
+    fclose(rfile);
+    num_gens = rs.wd_fsa->alphabet->base->size;
+    if (cosets && (diff1_ip || diff2_ip)) {
+/* Because of the separator, we copy the names and add "_H" as separator */
+      num_gens++;
+      tmalloc(gen_names,char *,num_gens+1);
+      for (i=1;i<num_gens;i++) {
+        tmalloc(gen_names[i],
+                  char,stringlen(rs.wd_fsa->alphabet->base->names[i]+1));
+        strcpy(gen_names[i],rs.wd_fsa->alphabet->base->names[i]);
+      }
+      tmalloc(gen_names[num_gens],char,3);
+      strcpy(gen_names[num_gens],"_H");
+      rs.separator=num_gens;
+    }
+    else
+      gen_names = rs.wd_fsa->alphabet->base->names;
+    process_names(gen_names,num_gens);
+/* Set the pointers in the word-difference machine */
+    if (fsa_table_dptr_init(rs.wd_fsa)==-1) exit(1);
+  }
+
+  reduce_word = rws_ip ? rws_reduce : cosets ? diff_reduce_cos : diff_reducex;
+
+  tmalloc(gen_word,gen,rwsptr->maxreducelen);
+  if (file_ip) {
+/* open file containing list of words, and deal with assignment */
+    if ((rfile = fopen(inf2,"r")) == 0) {
+      fprintf(stderr,"Cannot open file %s.\n",inf2);
+      exit(1);
+    }
+    wfile = fopen(outf,"w");
+    read_ident(rfile,kbm_buffer,&delim,FALSE);
+    fprintf(wfile,"%s.reduced := [\n",kbm_buffer);
+    if (delim != ':'){
+      fprintf(stderr,
+        "#Input error: file must contain a list assignment\n");
+      exit(1);
+    }
+    check_next_char(rfile,'=');
+    read_delim(rfile,&delim);
+    if (delim != '['){
+      fprintf(stderr,
+        "#Input error: file must contain a list assignment\n");
+      exit(1);
+    }
+    first = TRUE;
+  }
+  else {
+    printf("#Input words for reduction.\n#Separate words with ','.\n");
+    printf("#Terminate input with ';'.\n");
+    rfile=stdin; wfile=stdout;
+  }
+  readit=TRUE;
+  delim = 0;
+  while (delim != ';' && delim != ']') {
+    char *copyword;
+    int res;
+    read_word(rfile,gen_word,gen_word+rwsptr->maxreducelen,&delim,
+		gen_names,num_gens,TRUE);
+    reduce_word(gen_word,&rs);
+    if (genstrlen(gen_word) > rwsptr->maxreducelen/2) {
+      fprintf(wfile,"Word grew too long during reduction!\n");
+    }
+    else {
+      if (file_ip) {
+        if (first) first = FALSE;
+        else fprintf(wfile,",\n");
+      }
+      else
+        fprintf(wfile,"reduces to:\n");
+      strcpy(kbm_buffer,"  ");
+      if (expwds)
+        add_expanded_word_to_buffer(wfile,gen_word,gen_names);
+      else
+        add_word_to_buffer(wfile,gen_word,gen_names);
+      if (file_ip) fprintf(wfile,"%s",kbm_buffer);
+      else fprintf(wfile,"%s\n",kbm_buffer);
+    }
+  }
+  if (file_ip) {
+    check_next_char(rfile,';');
+    fprintf(wfile,"\n];\n");
+    fclose(wfile);
+  }
+
+  if (rws_ip) {
+    rws_clear(rwsptr);
+    fsa_clear(rwsptr->reduction_fsa);
+  }
+  else {
+    fsa_clear(rs.wd_fsa);
+    tfree(rs.wd_fsa);
+  }
+  tfree(gen_word);
+  exit(0);
+}
+ 
+void
+badusage_wordreduce()
+{
+    fprintf(stderr,
+ "Usage: wordreduce [-kbprog/-diff1/-diff2/-diff1c] [-mrl maxreducelen] [-e]\n"
+     );
+    fprintf(stderr,"\t[-cos] groupname [cosname] [-f filename]\n");
+    exit(1);
+}
+
+/* diffreduce.c  1/11/95
+ * 6/8/98 large-scale re-organisation to elimiante externals.
+ * 9/1/98 type of generator changed from char to `gen' 
+ * Copied from old automata package and edited.
+ * This file contains the procedure for reducing a word using a
+ * word-difference machine *wd_fsa (defined externally).
+ */
+
+/* functions defined in this file */
+//int diff_reduce();
+
+/* functions defined in other files used in this file */
+//int genstrlen();
+
+int diff_reducex(w,rs_wd)
+        gen              *w;
+        reduction_struct *rs_wd;
+/* w is the word to be reduced using the word-difference machine  *wd_fsa.
+ * It is assumed that wd_fsa->table->table_data_dptr is set up.
+ * This function allocates its own space.
+ * NOTE: No checks on the validity of the word are carried out.
+ n*/
+{ int ndiff, ngens, identity, padsymbol, wordlen, ***difftab,
+      gct, *gpref, level, gen1, gen2, diff, diffct, newdiff,
+      olen, nlen, i, j;
+  boolean deqi, donesub, *cf;
+  fsa *wd_fsa = rs_wd->wd_fsa;
+  int maxv = MAXV;
+  struct vertexd {
+       gen genno;
+       int diffno;
+       int sublen;
+       struct vertexd *backptr;
+  }
+       *gptr, *ngptr, *substruc;
+
+/* vertexd is the structure used to store a vertex in the graph of strings
+   for possible substitution. The components are as follows.
+   backptr - points back to another vertexd, or to zero.
+   genno  - the number of the generator at the end of the string.
+   diffno - the word difference number of the string defined by following
+            backptr back to zero (using genno), relative to the corresponding
+            part of the word being reduced.
+   sublen - plus or minus the length of this string. sublen is positive if and
+            only if the string lexicographically precedes the
+            corresponding part of the word being reduced.
+   sublen is put in to save time.
+    Another essential component of a vertexd is its level (i.e. the length of
+    the string got by chasing back to the beginning of the word)
+    but we always calculate this, using
+    the integers defined by gpref. (See below))
+*/
+	//printf("diffreducex!!");
+  if (wd_fsa->alphabet->type != PRODUCT || wd_fsa->alphabet->arity != 2) {
+    fprintf(stderr,
+        "Error: diff_reduce must be called with a word-difference machine.\n");
+    return -1;
+  }
+  gen * wcopy;
+  ndiff = wd_fsa->states->size;
+  ngens = wd_fsa->alphabet->base->size;
+  identity = wd_fsa->initial[1];
+  padsymbol = ngens+1;
+  wordlen= genstrlen(w);
+  tmalloc(wcopy,gen,wordlen+10); 
+  genstrcpy(wcopy,w);
+  int wordlencopy=wordlen;
+  if (wordlen<=0)
+    return 0;
+
+  difftab = wd_fsa->table->table_data_dptr;
+  w = w-1; /* since code below assumes word is from w[1] .. w[wordlen]. */
+
+  tmalloc(cf,boolean,ndiff+1);
+/* cf is used as a characteristic function, when constructing a subset of the
+  set  D  of word differences.
+*/
+
+  tmalloc(gpref,int,wordlen+1);
+  gct= -1;
+  gpref[0]= -1;
+/* gpref[n]+1 is the number of vertices that have been defined after reading the
+  first n elements of the word. These vertices are gptr[0],...,gptr[gpref[n]].
+  We start by allocating space for maxv vertices.
+*/
+
+  tmalloc(gptr,struct vertexd,maxv);
+
+/* Now we start reading the word. */
+  level=0;
+  int dafti=0;
+  int dafti1=0;
+  int dafti2=0;
+  int startg2=0;
+  while (++level<=wordlen) {
+    for (i=1;i<=ndiff;i++)
+      cf[i]=FALSE;
+/* Read the element of the word at position level. */
+    gen1= w[level];
+    startg2=1;
+   if (gen1==0) 
+	printf("bad gen1!\n");
+    //printf("%d at level %d\n",gen1,level);
+
+/* The next loop is over the identity and the subset of D defined at the
+   previous level, level-1.
+*/
+    diff = identity;
+    while (1) {
+      deqi= diff==identity;
+/* First look for a possible substitution of a shorter string */
+	dafti1++;
+      newdiff = dense_dtarget(difftab,gen1,padsymbol,diff);
+      if (newdiff==identity) {
+/* Make substitution and reduce length of word by 1. */
+        i = level-1;
+        if (!deqi) {
+          substruc = gptr+diffct;
+          do {
+            w[i] = substruc->genno;
+	      //if (w[i]==0) printf("bad2!!\n");
+            substruc = substruc->backptr;
+            i--;
+          } while (substruc);
+        }
+        for (j=level;j<wordlen;j++)
+          w[j] = w[j+1];
+	      //if (w[j]==0) printf("bad4!!\n");
+        w[wordlen] = 0;
+        wordlen--;
+        level= i>0 ? i-1 : i;
+    //remove any 0's from the new word!!!
+		//printf("remove any zeros after sub and reduce by 1!!\n");
+		int jj,kk=0;
+        	for (jj=level+1;jj<=wordlen;jj++){
+			if (w[jj]==0) {
+				kk++;
+				wordlen--;
+			}
+			if (kk>0) {
+				if (w[jj+kk]==0)
+          				w[jj] = w[jj+kk+1];
+					//printf("NO1!!\n");
+				else
+          				w[jj] = w[jj+kk];
+			}
+		}
+		w[wordlen+1]=0;
+
+/* Whenever we make a substitution, we have to go back one level more than
+   expected, because of our policy of looking ahead for substitutions
+   that reduce the length by 2.
+*/
+        gct = gpref[level];
+        break;
+      }
+      else if (newdiff && level<wordlen) {
+   dafti2++;
+        j = dense_dtarget(difftab,w[level+1],padsymbol,newdiff);
+        if (j==identity)
+/* Make substitution and reduce length of word by 2. */
+        { i = level-1;
+          if (!deqi) {
+            substruc=gptr+diffct;
+            do {
+              w[i] = substruc->genno;
+	      //if (w[i]==0) printf("bad1!!\n");
+              substruc = substruc->backptr;
+              i--;
+            } while (substruc);
+          }
+          for (j=level;j<wordlen-1;j++)
+            w[j] = w[j+2];
+	      //if (w[j]==0) printf("bad3!!\n");
+          w[wordlen-1] = 0;
+          wordlen -= 2;
+    //remove any 0's from the new word!!!
+          level = i>0 ? i-1 : i;
+		//printf("remove any zeros after sub and red by 2!!\n");
+		int jj,kk=0;
+        	for (jj=level+1;jj<=wordlen;jj++){
+			if (w[jj]==0) {
+				kk++;
+				wordlen--;
+			}
+			if (kk>0) {
+				if (w[jj+kk]==0)
+          				w[jj] = w[jj+kk+1];
+					//printf("NO2!!\n");
+				else
+          				w[jj] = w[jj+kk];
+			}
+		}
+		w[wordlen+1]=0;
+          gct = gpref[level];
+          break;
+        }
+        else  {
+		if (!deqi) {
+			startg2=0;
+			//printf("shorter word %d -> %d\n",diff,newdiff);
+		}
+        }
+      }
+
+      donesub = FALSE;
+/* Now we loop over the generator that is a candidate for substitution
+   at this point.
+*/
+      for (gen2=startg2;gen2<=ngens;gen2++)
+	//cpc daft
+       if ((gen2==0)||(newdiff = dense_dtarget(difftab,gen1,gen2,diff))) {
+	dafti++;
+	//printf("\n%d (%d,%d)-> %d",diff,gen1,gen2,newdiff); 
+        if (newdiff==identity) {
+          if (deqi) {
+            if (gen2<gen1) {
+              w[level] = gen2;
+	      //printf("\n** %d = %d",level, gen2);
+              level = level>1 ? level-2 : level-1;
+              gct = gpref[level];
+              donesub = TRUE;
+              break;
+            }
+          }
+          else if (gptr[diffct].sublen > 0) {
+/* Make a substitution (by a string of equal length). */
+	    int shorterby=0; 
+            w[level] = gen2;
+	      //printf("\n** %d = %d",level, gen2);
+            i = level-1;
+            substruc = gptr+diffct;
+            do {
+	      if (substruc->genno==0)
+	      {
+		//printf("shorter at %d!\n",i);
+		shorterby++;
+		//w[i]=1;
+	      }
+              w[i] = substruc->genno;
+	      //printf("\n* %d = %d",i,  w[i]);
+              substruc = substruc->backptr;
+              i--;
+            } while (substruc);
+            level = i>0 ? i-1 : i;
+            gct = gpref[level];
+	    if (shorterby) {
+		//printf("shorterby!!\n");
+		int j,k=0;
+        	for (j=level+1;j<=wordlen;j++){
+			if (w[j]==0) {
+				k++;
+				wordlen--;
+			}
+			if (k>0) {
+				if (w[j+k]==0) {
+					w[j]=w[j+k+1];
+				}
+				else
+          				w[j] = w[j+k];
+			}
+		}
+        	w[wordlen+1] = 0;
+	    }
+            donesub = TRUE;
+            break;
+          }
+        }
+        else {
+          if (gen2>0 && cf[newdiff])
+/* We have this word difference stored already, but we will check to see if
+   the current string precedes the existing one.
+*/
+            for (i=gpref[level-1]+1;;i++) {
+              substruc=gptr+i;
+              if (substruc->diffno == newdiff) {
+                olen = substruc->sublen;
+                nlen = deqi ? (gen2 < gen1 ? 1 : -1) : 
+                       (j = (gptr[diffct].sublen))>0 ? j+1 : j-1;
+                if (nlen > olen) {
+/* The new string is better than the existing one */
+                  substruc->genno = gen2;
+                  substruc->sublen = nlen;
+                  substruc->backptr = deqi ? 0 : gptr+diffct;
+                }
+                break;
+              }
+            }
+          else
+/* This is a new word difference at this level, so we define a new vertexd in
+   graph.
+*/
+          { gct++;
+            if (gct >= maxv) {
+/* We need more space for vertices. Allocate twice the preceding space and
+   copy existing data.
+*/
+              tmalloc(ngptr,struct vertexd,2*maxv);
+              if (kbm_print_level>=3)
+                printf("    #Allocating more space in diff_reduce.\n");
+              for (i=0;i<maxv;i++) {
+                ngptr[i].genno = gptr[i].genno;
+                ngptr[i].diffno = gptr[i].diffno;
+                ngptr[i].sublen = gptr[i].sublen;
+                substruc = gptr[i].backptr;
+                if (substruc==0)
+                  ngptr[i].backptr = 0;
+                else
+                  for (j=i-1;;j--) if (substruc==gptr+j) {
+                    ngptr[i].backptr = ngptr+j;
+                    break;
+                  }
+              }
+              tfree(gptr);
+              gptr=ngptr;
+              maxv *= 2;
+            }
+/* Define the new vertexd. */
+            substruc = gptr+gct;
+            nlen = deqi ? (gen2<gen1 ? 1 : -1) : 
+                       (j = (gptr[diffct].sublen))>0 ? j+1 : j-1;
+            substruc->genno = gen2;
+            substruc->diffno = newdiff;
+            substruc->sublen = nlen;
+            substruc->backptr = deqi ? 0 : gptr+diffct;
+	    if (gen2!=0)
+               cf[newdiff] = TRUE;
+	    if (gen2==0) {
+		if ((gptr+diffct)->genno==0)
+			// dont want two $s in succession - forget about it!!
+			gct--;	
+		else {
+                 cf[newdiff] = TRUE;
+		 if (nlen<0)
+			substruc->sublen=nlen*-1;
+		}
+		//gct--;
+		//printf("shorter word %d -> %d\n",diff,newdiff);
+		startg2=1;
+	    }
+          }
+        }
+      } /*End of loop over gen2 */
+
+      if (donesub)
+        break;
+
+/* Go on to next word difference from previous level. */
+      if (diff==identity) {
+        if (level==1) break;
+        diffct = gpref[level-2]+1;
+      }
+      else
+        diffct++;
+      if (diffct > gpref[level-1])
+         break;
+      diff = gptr[diffct].diffno;
+    } /* end of loop over word differences at previous level */
+
+    gpref[level] = gct;
+  }
+// daft
+//	printf("dafti=%d %d %d\n",dafti, dafti1, dafti2);
+  tfree(gptr);
+  tfree(cf);
+  tfree(gpref);
+  tfree(wcopy);
+  return 0;
+}
+int
+diff_reducexx(w,rs_wd)
+        gen              *w;
+        reduction_struct *rs_wd;
+/* w is the word to be reduced using the word-difference machine  *wd_fsa.
+ * It is assumed that wd_fsa->table->table_data_dptr is set up.
+ * This function allocates its own space.
+ * NOTE: No checks on the validity of the word are carried out.
+ n*/
+{ int ndiff, ngens, identity, padsymbol, wordlen, ***difftab,
+      gct, *gpref, level, gen1, gen2, diff, diffct, newdiff,
+      olen, nlen, i, j;
+  boolean deqi, donesub, *cf;
+  fsa *wd_fsa = rs_wd->wd_fsa;
+  int maxv = MAXV;
+  struct vertexd {
+       gen genno;
+       int diffno;
+       int sublen;
+       struct vertexd *backptr;
+  }
+       *gptr, *ngptr, *substruc;
+
+/* vertexd is the structure used to store a vertex in the graph of strings
+   for possible substitution. The components are as follows.
+   backptr - points back to another vertexd, or to zero.
+   genno  - the number of the generator at the end of the string.
+   diffno - the word difference number of the string defined by following
+            backptr back to zero (using genno), relative to the corresponding
+            part of the word being reduced.
+   sublen - plus or minus the length of this string. sublen is positive if and
+            only if the string lexicographically precedes the
+            corresponding part of the word being reduced.
+   sublen is put in to save time.
+    Another essential component of a vertexd is its level (i.e. the length of
+    the string got by chasing back to the beginning of the word)
+    but we always calculate this, using
+    the integers defined by gpref. (See below))
+*/
+	//printf("diffreducex!!");
+  if (wd_fsa->alphabet->type != PRODUCT || wd_fsa->alphabet->arity != 2) {
+    fprintf(stderr,
+        "Error: diff_reduce must be called with a word-difference machine.\n");
+    return -1;
+  }
+  ndiff = wd_fsa->states->size;
+  ngens = wd_fsa->alphabet->base->size;
+  identity = wd_fsa->initial[1];
+  padsymbol = ngens+1;
+  wordlen= genstrlen(w);
+  if (wordlen<=0)
+    return 0;
+  difftab = wd_fsa->table->table_data_dptr;
+  w = w-1; /* since code below assumes word is from w[1] .. w[wordlen]. */
+
+  tmalloc(cf,boolean,ndiff+1);
+/* cf is used as a characteristic function, when constructing a subset of the
+  set  D  of word differences.
+*/
+
+  tmalloc(gpref,int,wordlen+1);
+  gct= -1;
+  gpref[0]= -1;
+/* gpref[n]+1 is the number of vertices that have been defined after reading the
+  first n elements of the word. These vertices are gptr[0],...,gptr[gpref[n]].
+  We start by allocating space for maxv vertices.
+*/
+
+  tmalloc(gptr,struct vertexd,maxv);
+
+/* Now we start reading the word. */
+  level=0;
+  int dafti=0;
+  int dafti1=0;
+  int dafti2=0;
+  int startg2=0;
+  while (++level<=wordlen) {
+    for (i=1;i<=ndiff;i++)
+      cf[i]=FALSE;
+/* Read the element of the word at position level. */
+    gen1= w[level];
+    startg2=1;
+    //printf("%d at level %d\n",gen1,level);
+
+/* The next loop is over the identity and the subset of D defined at the
+   previous level, level-1.
+*/
+    diff = identity;
+    while (1) {
+      deqi= diff==identity;
+/* First look for a possible substitution of a shorter string */
+	dafti1++;
+      newdiff = dense_dtarget(difftab,gen1,padsymbol,diff);
+      if (newdiff==identity) {
+/* Make substitution and reduce length of word by 1. */
+        i = level-1;
+        if (!deqi) {
+          substruc = gptr+diffct;
+          do {
+            w[i] = substruc->genno;
+	      //if (w[i]==0) printf("bad2!!\n");
+            substruc = substruc->backptr;
+            i--;
+          } while (substruc);
+        }
+        for (j=level;j<wordlen;j++)
+          w[j] = w[j+1];
+	      //if (w[j]==0) printf("bad4!!\n");
+        w[wordlen] = 0;
+        wordlen--;
+        level= i>0 ? i-1 : i;
+    //remove any 0's from the new word!!!
+		//printf("remove any zeros after sub and reduce by 1!!\n");
+		int jj,kk=0;
+        	for (jj=level;jj<=wordlen;jj++){
+			if (w[jj]==0) {
+				kk++;
+				wordlen--;
+			}
+			if (kk>0)
+          			w[jj] = w[jj+kk];
+		}
+		w[wordlen+1]=0;
+
+/* Whenever we make a substitution, we have to go back one level more than
+   expected, because of our policy of looking ahead for substitutions
+   that reduce the length by 2.
+*/
+        gct = gpref[level];
+        break;
+      }
+      else if (newdiff && level<wordlen) {
+   dafti2++;
+        j = dense_dtarget(difftab,w[level+1],padsymbol,newdiff);
+        if (j==identity)
+/* Make substitution and reduce length of word by 2. */
+        { i = level-1;
+          if (!deqi) {
+            substruc=gptr+diffct;
+            do {
+              w[i] = substruc->genno;
+	      //if (w[i]==0) printf("bad1!!\n");
+              substruc = substruc->backptr;
+              i--;
+            } while (substruc);
+          }
+          for (j=level;j<wordlen-1;j++)
+            w[j] = w[j+2];
+	      //if (w[j]==0) printf("bad3!!\n");
+          w[wordlen-1] = 0;
+          wordlen -= 2;
+    //remove any 0's from the new word!!!
+          level = i>0 ? i-1 : i;
+		//printf("remove any zeros after sub and red by 2!!\n");
+		int jj,kk=0;
+        	for (jj=level;jj<=wordlen;jj++){
+			if (w[jj]==0) {
+				kk++;
+				wordlen--;
+			}
+			if (kk>0)
+          			w[jj] = w[jj+kk];
+		}
+		w[wordlen+1]=0;
+          gct = gpref[level];
+          break;
+        }
+        else  {
+		if (!deqi) {
+			startg2=0;
+			//printf("shorter word %d -> %d\n",diff,newdiff);
+		}
+        }
+      }
+
+      donesub = FALSE;
+/* Now we loop over the generator that is a candidate for substitution
+   at this point.
+*/
+      for (gen2=startg2;gen2<=ngens;gen2++)
+	//cpc daft
+       if ((gen2==0)||(newdiff = dense_dtarget(difftab,gen1,gen2,diff))) {
+	dafti++;
+	//printf("\n%d (%d,%d)-> %d",diff,gen1,gen2,newdiff); 
+        if (newdiff==identity) {
+          if (deqi) {
+            if (gen2<gen1) {
+              w[level] = gen2;
+	      //printf("\n** %d = %d",level, gen2);
+              level = level>1 ? level-2 : level-1;
+              gct = gpref[level];
+              donesub = TRUE;
+              break;
+            }
+          }
+          else if (gptr[diffct].sublen > 0) {
+/* Make a substitution (by a string of equal length). */
+	    int shorterby=0; 
+            w[level] = gen2;
+	      //printf("\n** %d = %d",level, gen2);
+            i = level-1;
+            substruc = gptr+diffct;
+            do {
+	      if (substruc->genno==0)
+	      {
+		//printf("shorter at %d!\n",i);
+		shorterby++;
+		//w[i]=1;
+	      }
+              w[i] = substruc->genno;
+	      //printf("\n* %d = %d",i,  w[i]);
+              substruc = substruc->backptr;
+              i--;
+            } while (substruc);
+            level = i>0 ? i-1 : i;
+            gct = gpref[level];
+	    if (shorterby) {
+		//printf("shorterby!!\n");
+		int j,k=0;
+        	for (j=level;j<=wordlen;j++){
+			if (w[j]==0) {
+				k++;
+				wordlen--;
+			}
+			if (k>0)
+          			w[j] = w[j+k];
+		}
+        	w[wordlen+1] = 0;
+	    }
+            donesub = TRUE;
+            break;
+          }
+        }
+        else {
+          if (gen2>0 && cf[newdiff])
+/* We have this word difference stored already, but we will check to see if
+   the current string precedes the existing one.
+*/
+            for (i=gpref[level-1]+1;;i++) {
+              substruc=gptr+i;
+              if (substruc->diffno == newdiff) {
+                olen = substruc->sublen;
+                nlen = deqi ? (gen2 < gen1 ? 1 : -1) : 
+                       (j = (gptr[diffct].sublen))>0 ? j+1 : j-1;
+                if (nlen > olen) {
+/* The new string is better than the existing one */
+                  substruc->genno = gen2;
+                  substruc->sublen = nlen;
+                  substruc->backptr = deqi ? 0 : gptr+diffct;
+                }
+                break;
+              }
+            }
+          else
+/* This is a new word difference at this level, so we define a new vertexd in
+   graph.
+*/
+          { gct++;
+            if (gct >= maxv) {
+/* We need more space for vertices. Allocate twice the preceding space and
+   copy existing data.
+*/
+              tmalloc(ngptr,struct vertexd,2*maxv);
+              if (kbm_print_level>=3)
+                printf("    #Allocating more space in diff_reduce.\n");
+              for (i=0;i<maxv;i++) {
+                ngptr[i].genno = gptr[i].genno;
+                ngptr[i].diffno = gptr[i].diffno;
+                ngptr[i].sublen = gptr[i].sublen;
+                substruc = gptr[i].backptr;
+                if (substruc==0)
+                  ngptr[i].backptr = 0;
+                else
+                  for (j=i-1;;j--) if (substruc==gptr+j) {
+                    ngptr[i].backptr = ngptr+j;
+                    break;
+                  }
+              }
+              tfree(gptr);
+              gptr=ngptr;
+              maxv *= 2;
+            }
+/* Define the new vertexd. */
+            substruc = gptr+gct;
+            nlen = deqi ? (gen2<gen1 ? 1 : -1) : 
+                       (j = (gptr[diffct].sublen))>0 ? j+1 : j-1;
+            substruc->genno = gen2;
+            substruc->diffno = newdiff;
+            substruc->sublen = nlen;
+            substruc->backptr = deqi ? 0 : gptr+diffct;
+	    if (gen2!=0)
+               cf[newdiff] = TRUE;
+	    if (gen2==0) {
+		if ((gptr+diffct)->genno==0)
+			// dont want two $s in succession - forget about it!!
+			gct--;	
+		else {
+                 cf[newdiff] = TRUE;
+		 if (nlen<0)
+			substruc->sublen=nlen*-1;
+		}
+		//gct--;
+		//printf("shorter word %d -> %d\n",diff,newdiff);
+		startg2=1;
+	    }
+          }
+        }
+      } /*End of loop over gen2 */
+
+      if (donesub)
+        break;
+
+/* Go on to next word difference from previous level. */
+      if (diff==identity) {
+        if (level==1) break;
+        diffct = gpref[level-2]+1;
+      }
+      else
+        diffct++;
+      if (diffct > gpref[level-1])
+         break;
+      diff = gptr[diffct].diffno;
+    } /* end of loop over word differences at previous level */
+
+    gpref[level] = gct;
+  }
+// daft
+//	printf("dafti=%d %d %d\n",dafti, dafti1, dafti2);
+  tfree(gptr);
+  tfree(cf);
+  tfree(gpref);
+  return 0;
+}
