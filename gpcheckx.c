@@ -105,6 +105,7 @@ fsa *fsa_wa_x();
 fsa *fsa_extractwdsfromwa(); 
 fsa *fsa_extractwdsfrom_recovery(); 
 fsa *fsa_ex_min(); 
+fsa *fsa_ex_geo(); 
 //fsa  *fsa_minred();
 //fsa  *fsa_minkb();
 //fsa  *fsa_geopairs();
@@ -575,6 +576,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   int hashlimit=0;
   boolean use_wa = FALSE;
   boolean exmin_command = FALSE;
+  boolean exgeo_command = FALSE;
   boolean extractwdsfromwa_command = FALSE;
   boolean exwa_command = FALSE;
   boolean exminex_command = FALSE;
@@ -810,6 +812,12 @@ int main2(argc, argv, read_last_wa,wa_size)
       	}
 	diff2name_command=TRUE;
 	diff2namestr=argv[arg];
+    }
+    else if (strcmp(argv[arg],"-extractwdsfromgeo")==0)
+    {
+	exgeo_command=TRUE;
+        read_geowa = TRUE;
+
     }
     else if (strcmp(argv[arg],"-extractwdsfrommin")==0)
     {
@@ -1122,6 +1130,47 @@ int main2(argc, argv, read_last_wa,wa_size)
   strcpy(tempfilename,inf1);
   strcat(tempfilename,"temp_XXX");
 
+  if (do_geo || exgeo_command)
+  {
+	if (read_geowa) {
+ 	 tmalloc(geowa,fsa,1);
+         if ((rfile = fopen(inf8,"r")) == 0) {
+            fprintf(stderr,"Cannot open file %s.\n",inf8);
+            exit(1);
+         }
+         Printf("reading %s\n",inf8);
+         fsa_read(rfile,geowa,DENSE,0,0,TRUE,fsaname);
+         fclose(rfile);
+        }
+        if (exgeo_command) {
+
+              Printf("calling fsa_minred on geowa\n");
+              //minred = fsa_minred(geowa,op_store,FALSE,tempfilename);
+		// minrred==pfred!!
+              minred = fsa_pfxred(geowa,op_store,tempfilename,0);
+              if (minred==0) exit(1);
+              Printf("  #Number of states of minred before minimisation = %d.\n",
+                    minred->states->size);
+              if (fsa_minimize_big_hash(minred,hash_table_size,
+			counter,minimize_big_hash)==-1) exit(1);
+              Printf("  #Number of states of minred after minimisation = %d.\n",
+                    minred->states->size);
+	      write_fsa (minred,gpname,".minred",fsaname);
+	      if (do_minredonly)
+		exit(0);
+	// gpwa
+    if ((rfile = fopen(inf4,"r")) == 0) {
+        fprintf(stderr,"Cannot open file %s.\n",inf4);
+        exit(1);
+    }
+    Printf("reading %s\n",inf4);
+    tmalloc(gpwa,fsa,1);
+    fsa_read(rfile,gpwa,DENSE,0,0,TRUE,fsaname);
+    Printf("%s has size %d\n",inf4,gpwa->states->size);
+    //*wa_size=gpwa->states->size;
+    fclose(rfile);               
+      }
+  }
   if (exmin_command ||extractwdsfromwa_command)
 	read_wa=FALSE;
   if (!use_andnot && !read_wa && !exwa_command) {
@@ -1132,14 +1181,16 @@ int main2(argc, argv, read_last_wa,wa_size)
       }
       else {
       	//gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE);
-	if (exmin_command) {
+	if (exmin_command || exgeo_command) {
 		char * fsatype=inf5;
 		if (use_wa)
 			fsatype=inf4;
 		if (recovery)
       			gpwa2=fsa_extractwdsfrom_recovery(diff2,op_store,tempfilename,recovery_num);
-		else
-      			gpwa2=fsa_ex_min(diff2,op_store,tempfilename,fsatype,max_state,max_level,0); // .minred
+		else if (exmin_command)
+      			gpwa2=fsa_ex_min(diff2,op_store,tempfilename,fsatype,max_state,max_level,gpwa); // .minred
+		else //exgeo_command
+      			gpwa2=fsa_ex_geo(diff2,op_store,tempfilename,fsatype,max_state,max_level,gpwa); // .minred
 		use_andnot=TRUE;
 	}
 	else if (extractwdsfromwa_command) {
@@ -1154,7 +1205,7 @@ int main2(argc, argv, read_last_wa,wa_size)
       		gpwa=fsa_wa_x(diff2,op_store,tempfilename,FALSE,hashlimit);
 	     }
       }
-      if (exmin_command || extractwdsfromwa_command) {
+      if (exmin_command || extractwdsfromwa_command || exgeo_command) {
 	if (gpwa2==NULL) {
 		Printf("No list of lhs words produced\n");
 		exit(0);
@@ -1238,17 +1289,7 @@ int main2(argc, argv, read_last_wa,wa_size)
       }	
   }
   else if (do_geo) {
- 	tmalloc(geowa,fsa,1);
-	if (read_geowa) {
-   if ((rfile = fopen(inf8,"r")) == 0) {
-        fprintf(stderr,"Cannot open file %s.\n",inf8);
-        exit(1);
-    }
-    Printf("reading %s\n",inf8);
-    fsa_read(rfile,geowa,DENSE,0,0,TRUE,fsaname);
-    fclose(rfile);
-  }
-  else {
+    if (!read_geowa) {
 	Printf("calling fsa_wa_x on %s.diff2 (geo option)\n",gpname);
 	geowa=fsa_wa_x(diff2,DENSE,tempfilename,TRUE,0);
         if (kbm_print_level>1)
@@ -1259,10 +1300,11 @@ int main2(argc, argv, read_last_wa,wa_size)
         if (kbm_print_level>1)
         printf("  #Number of states of geowa after minimisation = %d.\n",
                 geowa->states->size);
-  }
-	fsaandnot_ptr=find_geo_wds(diff2,gpwa,gpname, tempfilename,
+	write_fsa (geowa,gpname,".geowa",fsaname);
+    }
+    fsaandnot_ptr=find_geo_wds(diff2,gpwa,gpname, tempfilename,
 			geowa,hash_table_size,counter,state_limit);
-        if (!no_exists_minimize) {
+    if (!no_exists_minimize) {
       if (kbm_print_level>1)
         printf("  #Number of states of fsaandnot before minimisation = %d.\n",
             fsaandnot_ptr->states->size);
@@ -1723,7 +1765,7 @@ else {
   free_fsa(fsaandnot_ptr);
   if (do_geo&&!read_geowa)
   {
-	write_fsa (geowa,gpname,".geowa",fsaname);
+	//write_fsa (geowa,gpname,".geowa",fsaname);
 	//printf("call gpgeowa to compute geodiff and geopairs\n");
   	if ((new_diff_size - old_diff_size) == 0)
 		printf ("%s.geowa should be correct\n",gpname);
@@ -4995,13 +5037,17 @@ fsa * fsa_geopairs_big_hash(waptr,diffptr,
      fsa_clear(waptr); fsa_clear(diffptr);
   }
 /* Now read the transition table back in */
+//Printf("reading tempfile in - is it too big????\n");
+//Printf("no of states is %d, transitions is %d\n",ns,nt);
   tempfile = fopen(tempfilename,"r");
   compressed_transitions_read(geopairsptr,tempfile);
   fclose(tempfile);
+//Printf("read it!!!!\n");
 
   unlink(tempfilename);
-
+ if (geopairsptr)
   return geopairsptr;
+ exit(99);
 }
 
 int get_image2_big_hash(rec,next_state,keytostate,
@@ -6381,13 +6427,14 @@ int diff_reducex(w,rs_wd)
   return 0;
 }
 
-fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr,max_state,max_level)
+fsa * fsa_ex_min (fsaptr,  op_table_type,tempfilename,minstr,max_state,max_level,gpwa)
 	fsa *fsaptr;
 	storage_type op_table_type;
 	char *tempfilename;
 	char *minstr;
 	int max_state;
 	int max_level;
+	fsa *gpwa;
 { 
 
 // extract wds using minred
@@ -7274,4 +7321,355 @@ fsa * fsa_extractwdsfrom_recovery (fsaptr, op_table_type,tempfilename,recovery_n
   if (no_accepts>0)
   	return wa;
   return NULL;
+}
+
+fsa * fsa_ex_geo (fsaptr,  op_table_type,tempfilename,geostr,max_state,max_level,gpwa)
+	fsa *fsaptr;
+	storage_type op_table_type;
+	char *tempfilename;
+	char *geostr;
+	int max_state;
+	int max_level;
+	fsa *gpwa;
+{ 
+
+// extract wds using geowa
+// create list of lhs's suitable for scanning using gpcheckx -t option
+// invoke by -extractwdsfromgeo 
+int  ***dtable, ne, ngens, ndiff, ns, *fsarow,  nt, cstate, cs, csdiff, csi,
+       im, i, k, g1, g2, len, identity;
+ unsigned short int *ht_ptr, *ht_ptr_save, *ht_ptrb, *ht_ptre, *cs_ptr, *cs_ptre, *ptr;
+  boolean dense_op,  no_trans_by_wa,good;
+  char *cf;
+  unsigned short int *state_cf;
+  int *wa1states;
+  int *historys;
+  int *historyl;
+  short_hash_table ht;
+  fsa *wa;
+  fsa *gpgeo;
+  FILE *tempfile;
+  int **watable;
+  int **gpwatable;
+  int **mintable;
+  char fsaname [100];
+  FILE  *fopen();
+  unsigned int	total_elements=0;
+  unsigned int tot_space_save;
+  unsigned int block_space_save;
+  unsigned int fail_state;
+unsigned int no_fails=0;
+unsigned int no_accepts=0;
+unsigned int no_prev_accepts=0;
+boolean watype=FALSE;
+Printf("Extracting new word differences from geowa, wa  and diff2\n");	
+    if ((rfile = fopen(geostr,"r")) == 0) {
+        fprintf(stderr,"Cannot open file %s.\n",geostr);
+        exit(1);
+    }
+    Printf("reading %s\n",geostr);
+    tmalloc(gpgeo,fsa,1);
+    fsa_read(rfile,gpgeo,DENSE,0,0,TRUE,fsaname);
+    Printf("%s has size %d\n",geostr,gpgeo->states->size);
+    fclose(rfile);               
+  watable=gpgeo->table->table_data_ptr;
+  gpwatable=gpwa->table->table_data_ptr;
+  if (gpgeo->num_accepting==1)
+	fail_state=gpgeo->accepting[1];
+  else {
+	fail_state=0;
+ 	watype=TRUE; 
+  }
+  if (!fsaptr->flags[DFA]){
+    fprintf(stderr,"Error: fsa_wa only applies to DFA's.\n");
+    return 0;
+  }
+
+  if (fsaptr->alphabet->type != PRODUCT || fsaptr->alphabet->arity != 2) {
+    fprintf(stderr,"Error in fsa_wa: fsa must be 2-variable.\n");
+    return 0;
+  }
+  if (fsaptr->states->type != WORDS) {
+    fprintf(stderr,"Error in fsa_wa: fsa must be word-difference type.\n");
+    return 0;
+  }
+
+  tmalloc(wa,fsa,1);
+  fsa_init(wa);
+  srec_copy(wa->alphabet,fsaptr->alphabet->base);
+  wa->flags[DFA] = TRUE;
+  wa->flags[ACCESSIBLE] = TRUE;
+  wa->flags[BFS] = TRUE;
+
+  ne = fsaptr->alphabet->size;
+  ngens = wa->alphabet->size;
+  ndiff = fsaptr->states->size;
+
+  if (ne != (ngens+1)*(ngens+1)-1) {
+   fprintf(stderr,
+       "Error: in a 2-variable fsa, alphabet size should = ngens^2 - 1.\n");
+    return 0;
+  }
+
+  identity = fsaptr->accepting[1]; /* assumed to be unique */
+  if (fsaptr->num_accepting!=1 || (identity != fsaptr->initial[1])) {
+    fprintf(stderr,"Error: Input to fsa_wa not a word-difference machine.\n");
+    return 0;
+  }
+
+  if (fsaptr->table->table_type!=DENSE) {
+     fprintf(stderr,
+      "Error: function fsa_wa can only be called with a densely-stored fsa.\n");
+     return 0;
+  }
+  dense_op = op_table_type==DENSE;
+  if (fsa_table_dptr_init(fsaptr)== -1) return 0;
+  dtable = fsaptr->table->table_data_dptr;
+
+  wa->states->type = SIMPLE;
+  wa->num_initial = 1;
+  tmalloc(wa->initial,int,2);
+  wa->initial[1] = 1;
+  wa->table->table_type = op_table_type;
+  wa->table->denserows = 0;
+  wa->table->printing_format = op_table_type;
+  
+  short_hash_init(&ht,FALSE,0,0,0);
+  ht_ptr = ht.current_ptr;
+  *(unsigned int *) ht_ptr=identity; //geowa
+  *(ht_ptr+2)=identity; //gpwa 
+  *(ht_ptr+3)=identity; //wd
+  im = short_hash_locate(&ht,4);
+  if (im== -1) return 0;
+  if (im!=1) {
+    fprintf(stderr,"Hash-initialisation problem in fsa_wa.\n");
+     return 0;
+  }
+
+  if ((tempfile=fopen(tempfilename,"w"))==0){
+    fprintf(stderr,"Error: cannot open file %s\n",tempfilename);
+     return 0;
+  }
+  tmalloc(fsarow,int,ngens);
+  len=ngens;
+ 
+  cstate = 0;
+  nt = 0; /* Number of transitions in exists */
+  tmalloc(cf,char,ndiff+1);
+  tmalloc(state_cf,unsigned short int,ndiff+1);
+  int incx=0; 
+  int incx2=0; 
+  int kk=0;
+  int no_statesx=1;
+  int total_hashx=sizeof(int);
+  int total_rhs=0;
+  int total_equal=0;
+  int currentlevel=0;
+  int maxthislevel=1;
+  //boolean first_coincidence=TRUE;
+  tmalloc(wa->accepting,int,1);
+  wa->num_accepting = 1;
+  wa->accepting[1] = 1000000000;
+  while (++cstate <= ht.num_recs) {
+    if (max_state>0)
+     if (cstate > max_state)
+	break;
+    if (max_level>0)
+     if (currentlevel > max_level)
+	break;
+    if (cstate>maxthislevel) {
+	maxthislevel=ht.num_recs;
+	currentlevel++;
+	if (no_accepts > 0){
+		Printf("level %d at state %d,accepts %d\n",currentlevel,cstate,no_accepts);
+		no_prev_accepts = no_accepts;
+	}
+    }
+    if (kbm_print_level>1 /*&& no_prev_accepts==no_accepts*/) {
+      if (
+          //(cstate<=1000000 && cstate%5000==0) || cstate%50000==0)
+          cstate%50000==0)
+       Printf("    #cstate = %d;  number of states = %d, level = %d\n",cstate,ht.num_recs, currentlevel);
+    }
+  ht_ptr_save=ht.current_ptr;
+  block_space_save = ht.block_space;
+  tot_space_save=ht.tot_space;
+    cs_ptr = short_hash_rec(&ht,cstate);
+    cs_ptre = short_hash_rec(&ht,cstate) + short_hash_rec_len(&ht,cstate) - 1;
+    if (!dense_op)
+      len = 0;
+    for (g1=1;g1<=ngens;g1++) {
+/* Calculate action of generator g1 on state cstate  - to get the image, we
+ * have to apply (g1,g2) to each element in the subset corresponding to cstate,
+ * and this for each generator g2 of the base-alphabet (including the padding
+ * symbol).
+ */
+      int wa1state=watable[g1][*(unsigned int *)cs_ptr];
+      no_trans_by_wa=FALSE;
+      boolean looking_for_1s=FALSE;
+      boolean found_1s=FALSE;
+      boolean accept_state = FALSE;
+      if (wa1state==fail_state) { 
+	looking_for_1s=TRUE;
+	//no_fails++;
+	no_trans_by_wa=TRUE;
+/* check if any of the wd's of this state have a transition by g1/x to 1 */
+/* If not, then this must be a lhs which doesnt fellow travel yet => new wd(s) */
+      }
+      if (wa1state==0)
+      {
+	no_trans_by_wa=TRUE;
+      }
+       for (i=1;i<=ndiff;i++) {
+         cf[i] = 0;
+       }
+       for (i=1;i<=ndiff;i++) {
+         state_cf[i] = 0;
+       }
+      ptr = cs_ptr+2; // first gpwastate,wd pair
+      int no_wd_states=0;
+
+      while (ptr <= cs_ptre) {
+ 
+ 	short int gpwastate=*ptr;
+        csdiff =  *(ptr+1); // dont add initial state
+        ptr+=2;
+        if (csdiff == identity) { 
+	        for (g2=1;g2<ngens+1;g2++){
+			int next_gpwastate=gpwatable[g2][gpwastate]; 
+			if (next_gpwastate == 0)
+				continue;
+ 			csi =  dense_dtarget(dtable,g1,g2,csdiff);
+			if (csi==0)
+       		     		continue;
+			state_cf[csi]=next_gpwastate;
+			cf[csi] = 1;
+			no_wd_states++;
+		}
+	} 
+	else 
+	{ //not identity
+		for (g2=1;g2<ngens+1;g2++){
+		  csi =  dense_dtarget(dtable,g1,g2,csdiff);
+		  if (csi==0)
+		    continue;
+		  if (looking_for_1s ) {
+		  	if (csi==identity) {
+				found_1s = TRUE;
+				break;
+		  	}
+		  	continue;
+		  }
+		  int next_gpwastate=gpwatable[g2][gpwastate]; 
+		  if (next_gpwastate == 0)
+			continue;
+		  cf[csi] = 1;
+	          state_cf[csi]=next_gpwastate;
+		  no_wd_states++;
+		} // for g2
+
+	/* now deal with pad on the right */
+	    csi =  dense_dtarget(dtable,g1,g2,csdiff);
+	    if (csi==0)
+		continue;
+	    if (looking_for_1s) {
+          	if (csi==identity)
+	  	{
+			found_1s = TRUE;
+			break;
+	  	}
+		continue;
+	    }
+	    //cf[csi] = 1;
+	    //state_cf[csi]=gpwastate;
+	    //no_wd_states++;
+	} // not identity
+      } // for ptr
+      if (looking_for_1s && !found_1s && no_wd_states>0) {
+		accept_state=TRUE;
+      }
+      else
+      {
+	accept_state=FALSE;
+      }
+      if (no_trans_by_wa) {
+	if (accept_state) {
+		fsarow[g1-1] = 1000000000; // make the last state + 1 the accept state
+		no_accepts++;
+	}
+	else {
+		fsarow[g1-1] = 0;
+		no_fails++;
+	}
+        continue;
+      }
+      
+      ht_ptrb = ht.current_ptr;
+      ht_ptre = ht_ptrb-1;
+      *(unsigned int *)(++ht_ptre)=wa1state;
+      ht_ptre++;
+      for (i=1;i<=ndiff;i++) {
+        k = cf[i];
+	if (k==1) {
+	 *(++ht_ptre) = state_cf[i];
+         *(++ht_ptre) = i;
+        }
+      }
+      im = short_hash_locate(&ht,ht_ptre-ht_ptrb+1);
+      if (im== -1) return 0;
+      fsarow[g1-1] = im; 
+	
+      if (max_state > 0)
+     	 if (im>max_state) {
+      		fsarow[g1-1] = 0; 
+	}
+    } // for gens
+    fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
+  } // while states
+  // write an accept state
+  int lenx=len; 
+  while (lenx>0) {
+	fsarow[--lenx]=0;
+  }
+  fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
+  
+  fclose(tempfile);
+  Printf("last state=%d\n",cstate);
+  Printf(" Accepts=%d\n",no_accepts);
+  short_hash_clear(&ht);
+  tfree(cf);
+  ns = wa->states->size = ht.num_recs+1;
+  wa->accepting[1] = ns;
+  wa->table->numTransitions = nt;
+/* Now read the transition table back in */
+  tempfile = fopen(tempfilename,"r");
+  if (no_accepts>0)
+  //compressed_transitions_read(wa,tempfile);
+  {
+  int ns, ne, nt, **table, *tab_ptr, len, i, j;
+
+  ns = wa->states->size;
+  ne = wa->alphabet->size;
+  nt = wa->table->numTransitions;
+
+  if (wa->table->table_type == DENSE) {
+    /* it is a pity that the table was output in transposed form! */
+    fsa_table_init(wa->table, ns, ne);
+    table = wa->table->table_data_ptr;
+    for (i = 1; i <= ns; i++)
+      for (j = 1; j <= ne; j++) {
+        size_t s = fread((void *)(table[j] + i), sizeof(int), (size_t)1, tempfile);
+	if (*(table[j]+i) > ns) 
+		*(table[j]+i)=ns; // accept state
+        (void)s; // HACK to silence compiler warning
+      }
+  }
+  } // compressed_transitions
+  fclose(tempfile);
+
+  unlink(tempfilename);
+  if (no_accepts>0)
+  	return wa; // scan using -t switch
+  return NULL;
+
 }
