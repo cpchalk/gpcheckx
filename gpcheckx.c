@@ -645,6 +645,7 @@ int main2(argc, argv, read_last_wa,wa_size)
         badusage_gpcheckx(FALSE);
       recovery_num=atoi(argv[arg]);
       recovery=TRUE;
+      exgeo_command=TRUE;
     }
     else if (strcmp(argv[arg],"-maxwdsize")==0)
     {
@@ -652,7 +653,6 @@ int main2(argc, argv, read_last_wa,wa_size)
       if (arg >= argc)
         badusage_gpcheckx(FALSE);
       max_diff2_size=atoi(argv[arg]);
-      recovery=TRUE;
     }
     else if (strcmp(argv[arg],"-minwdsize")==0)
     {
@@ -1130,7 +1130,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   strcpy(tempfilename,inf1);
   strcat(tempfilename,"temp_XXX");
 
-  if (do_geo || exgeo_command)
+  if (!recovery && (do_geo || exgeo_command))
   {
 	if (read_geowa) {
  	 tmalloc(geowa,fsa,1);
@@ -1144,20 +1144,20 @@ int main2(argc, argv, read_last_wa,wa_size)
         }
         if (exgeo_command) {
 
-              Printf("calling fsa_minred on geowa\n");
+              //Printf("calling fsa_minred on geowa\n");
               //minred = fsa_minred(geowa,op_store,FALSE,tempfilename);
 		// minrred==pfred!!
-              minred = fsa_pfxred(geowa,op_store,tempfilename,0);
-              if (minred==0) exit(1);
-              Printf("  #Number of states of minred before minimisation = %d.\n",
-                    minred->states->size);
-              if (fsa_minimize_big_hash(minred,hash_table_size,
-			counter,minimize_big_hash)==-1) exit(1);
-              Printf("  #Number of states of minred after minimisation = %d.\n",
-                    minred->states->size);
-	      write_fsa (minred,gpname,".minred",fsaname);
-	      if (do_minredonly)
-		exit(0);
+              //minred = fsa_pfxred(geowa,op_store,tempfilename,0);
+              //if (minred==0) exit(1);
+              //Printf("  #Number of states of minred before minimisation = %d.\n",
+               //     minred->states->size);
+              //if (fsa_minimize_big_hash(minred,hash_table_size,
+	//		counter,minimize_big_hash)==-1) exit(1);
+         //     Printf("  #Number of states of minred after minimisation = %d.\n",
+          //          minred->states->size);
+	   //   write_fsa (minred,gpname,".minred",fsaname);
+	    //  if (do_minredonly)
+	//	exit(0);
 	// gpwa
     if ((rfile = fopen(inf4,"r")) == 0) {
         fprintf(stderr,"Cannot open file %s.\n",inf4);
@@ -1190,7 +1190,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 		else if (exmin_command)
       			gpwa2=fsa_ex_min(diff2,op_store,tempfilename,fsatype,max_state,max_level,gpwa); // .minred
 		else //exgeo_command
-      			gpwa2=fsa_ex_geo(diff2,op_store,tempfilename,fsatype,max_state,max_level,gpwa); // .minred
+      			gpwa2=fsa_ex_geo(diff2,op_store,tempfilename,inf8,max_state,max_level,gpwa); // .minred
 		use_andnot=TRUE;
 	}
 	else if (extractwdsfromwa_command) {
@@ -7378,7 +7378,6 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
 	fail_state=gpgeo->accepting[1];
   else {
 	fail_state=0;
- 	watype=TRUE; 
   }
   if (!fsaptr->flags[DFA]){
     fprintf(stderr,"Error: fsa_wa only applies to DFA's.\n");
@@ -7510,15 +7509,11 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
       boolean found_1s=FALSE;
       boolean accept_state = FALSE;
       if (wa1state==fail_state) { 
-	looking_for_1s=TRUE;
+	// only interested in success states!!!
+	continue;
 	//no_fails++;
-	no_trans_by_wa=TRUE;
 /* check if any of the wd's of this state have a transition by g1/x to 1 */
 /* If not, then this must be a lhs which doesnt fellow travel yet => new wd(s) */
-      }
-      if (wa1state==0)
-      {
-	no_trans_by_wa=TRUE;
       }
        for (i=1;i<=ndiff;i++) {
          cf[i] = 0;
@@ -7553,13 +7548,6 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
 		  csi =  dense_dtarget(dtable,g1,g2,csdiff);
 		  if (csi==0)
 		    continue;
-		  if (looking_for_1s ) {
-		  	if (csi==identity) {
-				found_1s = TRUE;
-				break;
-		  	}
-		  	continue;
-		  }
 		  int next_gpwastate=gpwatable[g2][gpwastate]; 
 		  if (next_gpwastate == 0)
 			continue;
@@ -7568,41 +7556,14 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
 		  no_wd_states++;
 		} // for g2
 
-	/* now deal with pad on the right */
-	    csi =  dense_dtarget(dtable,g1,g2,csdiff);
-	    if (csi==0)
-		continue;
-	    if (looking_for_1s) {
-          	if (csi==identity)
-	  	{
-			found_1s = TRUE;
-			break;
-	  	}
-		continue;
-	    }
-	    //cf[csi] = 1;
-	    //state_cf[csi]=gpwastate;
-	    //no_wd_states++;
 	} // not identity
       } // for ptr
-      if (looking_for_1s && !found_1s && no_wd_states>0) {
-		accept_state=TRUE;
-      }
-      else
-      {
-	accept_state=FALSE;
-      }
-      if (no_trans_by_wa) {
-	if (accept_state) {
+      if (no_wd_states==0) {
+		//accept_state=TRUE;
 		fsarow[g1-1] = 1000000000; // make the last state + 1 the accept state
 		no_accepts++;
+        	continue;
 	}
-	else {
-		fsarow[g1-1] = 0;
-		no_fails++;
-	}
-        continue;
-      }
       
       ht_ptrb = ht.current_ptr;
       ht_ptre = ht_ptrb-1;
