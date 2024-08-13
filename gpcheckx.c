@@ -582,6 +582,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean exminex_command = FALSE;
   char * ex_str_wa, *ex_str_minex;
   boolean do_waonly=FALSE;
+  boolean do_geoonly=FALSE;
   boolean do_minredonly=FALSE;
   boolean do_geo=FALSE;
   boolean add_diagonals=FALSE;
@@ -765,6 +766,8 @@ int main2(argc, argv, read_last_wa,wa_size)
 	do_minredonly=TRUE;
     else if (strcmp(argv[arg],"-waonly")==0)
 	do_waonly=TRUE;
+    else if (strcmp(argv[arg],"-geoonly")==0)
+	do_geoonly=TRUE;
     else if (strcmp(argv[arg],"-counter")==0)
 	counter=TRUE;
     else if (strcmp(argv[arg],"-wt")==0)
@@ -1301,6 +1304,8 @@ int main2(argc, argv, read_last_wa,wa_size)
         printf("  #Number of states of geowa after minimisation = %d.\n",
                 geowa->states->size);
 	write_fsa (geowa,gpname,".geowa",fsaname);
+	if (do_geoonly)
+		exit(0);
     }
     fsaandnot_ptr=find_geo_wds(diff2,gpwa,gpname, tempfilename,
 			geowa,hash_table_size,counter,state_limit);
@@ -7510,6 +7515,7 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
       boolean accept_state = FALSE;
       if (wa1state==fail_state) { 
 	// only interested in success states!!!
+        fsarow[g1-1] = 0; 
 	continue;
 	//no_fails++;
 /* check if any of the wd's of this state have a transition by g1/x to 1 */
