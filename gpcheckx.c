@@ -48,6 +48,7 @@ static FILE *rfile, *wfile;
 //void fsa_print ();
 //int  fsa_minimize ();
 fsa * fsa_genmult2_int_x();
+int fsa_minimize_slow();
 //int genstrlen ();
 //void genstrcpy ();
 //int genstrcmp ();
@@ -146,6 +147,12 @@ typedef struct kts3{
     mstate3 value;
     struct kts3 *next_value;
 } kts3;
+
+typedef struct fsa_row2{
+    unsigned short transition;
+    unsigned short  state1;
+    unsigned short state2;
+} fsa_row2;
 boolean gpcheckx_onintr;
 /*
   This program takes as input the file gpname.diff2. It then aims to
@@ -585,6 +592,7 @@ int main2(argc, argv, read_last_wa,wa_size)
   boolean do_geoonly=FALSE;
   boolean do_minredonly=FALSE;
   boolean do_geo=FALSE;
+  boolean do_slowmin=FALSE;
   boolean add_diagonals=FALSE;
   boolean all_diagonals=FALSE;
   boolean check_diagonals=FALSE;
@@ -748,6 +756,12 @@ int main2(argc, argv, read_last_wa,wa_size)
 	do_geo=TRUE;
 	read_wa=TRUE;
     }
+    else if (strcmp(argv[arg],"-slowmin")==0)
+    {
+	do_slowmin=TRUE;
+	do_geo=TRUE;
+	read_wa=TRUE;
+    }
     else if (strcmp(argv[arg],"-rp")==0)
     {
 	restricted_pfxred=TRUE;
@@ -766,8 +780,11 @@ int main2(argc, argv, read_last_wa,wa_size)
 	do_minredonly=TRUE;
     else if (strcmp(argv[arg],"-waonly")==0)
 	do_waonly=TRUE;
-    else if (strcmp(argv[arg],"-geoonly")==0)
+    else if (strcmp(argv[arg],"-geoonly")==0) {
 	do_geoonly=TRUE;
+	do_geo=TRUE;
+	read_wa=TRUE;
+   }
     else if (strcmp(argv[arg],"-counter")==0)
 	counter=TRUE;
     else if (strcmp(argv[arg],"-wt")==0)
@@ -941,7 +958,11 @@ int main2(argc, argv, read_last_wa,wa_size)
     else if (strcmp(argv[arg],"-w")==0)
       read_wa = TRUE;
     else if (strcmp(argv[arg],"-gw")==0)
+    {
       read_geowa = TRUE;
+      do_geo = TRUE;
+      read_wa=TRUE;
+    }
     else if (strcmp(argv[arg], "-d") == 0) {
       arg++;
       if (arg >= argc)
@@ -1236,7 +1257,10 @@ int main2(argc, argv, read_last_wa,wa_size)
       if (kbm_print_level>1)
         printf("  #Number of states of gpwa before minimisation = %d.\n",
             gpwa->states->size);
+      //write_fsa (gpwa,gpname,".wabig",fsaname);
+      //kbm_print_level=5;
       fsa_minimize_big_hash(gpwa,hash_table_size,counter,minimize_big_hash);
+      //kbm_print_level=2;
       if (kbm_print_level>1)
         printf("  #Number of states of gpwa after minimisation = %d.\n",
             gpwa->states->size);
@@ -1308,7 +1332,7 @@ int main2(argc, argv, read_last_wa,wa_size)
 		exit(0);
     }
     fsaandnot_ptr=find_geo_wds(diff2,gpwa,gpname, tempfilename,
-			geowa,hash_table_size,counter,state_limit);
+			geowa,hash_table_size,counter,state_limit,do_slowmin);
     if (!no_exists_minimize) {
       if (kbm_print_level>1)
         printf("  #Number of states of fsaandnot before minimisation = %d.\n",
@@ -1497,7 +1521,7 @@ else {
         //fsaandnot_ptr=find_geo_wds(diff2T,gpwa,gpname, tempfilename,
                         //geowa,hash_table_size,counter,state_limit);
         fsaandnot_ptr=find_geo_wds(diff2,gpwa,gpname, tempfilename,
-                        geowa,hash_table_size,counter,state_limit);
+                        geowa,hash_table_size,counter,state_limit,do_slowmin);
 		//free_fsa(diff2T);
 		//diff2T=NULL;
 		free_fsa(geowa);
@@ -4654,7 +4678,7 @@ void analyse_diff2(char * gpname, int max_size,char *diff2str)
 }
 
 fsa* find_geo_wds(fsa *diff2, fsa *gpwa, char * gpname, char *tempfilename,
-			fsa *geowa,int hash_table_size,int counter,int state_limit)
+			fsa *geowa,int hash_table_size,int counter,int state_limit, int do_slowmin)
 {
 	fsa *geopairs, *fsaexists;
 	/*printf("calling fsa_wa_x on %s.diff2\n",gpname);
@@ -4675,7 +4699,7 @@ fsa* find_geo_wds(fsa *diff2, fsa *gpwa, char * gpname, char *tempfilename,
 		geopairs =
            	   fsa_geopairs_big_hash (gpwa,diff2,FALSE,
                             tempfilename,hash_table_size,
-                                counter,state_limit);
+                                counter,state_limit,do_slowmin);
 	}
 	else {
                 printf(
@@ -4689,7 +4713,12 @@ fsa* find_geo_wds(fsa *diff2, fsa *gpwa, char * gpname, char *tempfilename,
 		printf(
 		"  #Number of states of geopairs before minimisation = %d.\n",
 	   		 geopairs->states->size);
-	fsa_minimize(geopairs);
+	if (do_slowmin) { 
+		fsa_minimize_slow(geopairs,tempfilename);
+  		unlink(tempfilename);
+	}
+	else
+		fsa_minimize(geopairs);
 	if (kbm_print_level>1)
 		printf(
 		"  #Number of states of geopairs after minimisation = %d.\n",
@@ -4725,13 +4754,14 @@ if (CALC_GEODIFF) {
 }
 
 fsa * fsa_geopairs_big_hash(waptr,diffptr,
-           destroy,tempfilename,hash_table_size,counter,state_limit)
+           destroy,tempfilename,hash_table_size,counter,state_limit,do_slowmin)
 	fsa  *waptr, *diffptr;
 	boolean destroy;
 	char *tempfilename;
         unsigned int hash_table_size;
 	boolean counter;
 	int state_limit;
+	boolean do_slowmin;
 	
 {
   /* this is a version of fsa_geopairs which uses one large hash table whose
@@ -4746,6 +4776,8 @@ fsa * fsa_geopairs_big_hash(waptr,diffptr,
   unsigned int *ht_ptr;
   boolean  dense_op;
   fsa *geopairsptr;
+  unsigned short int *row2_data;
+  fsa_row2 * row2;
   hash_table ht;
   FILE *tempfile, *fopen();
   gen g1, g2;
@@ -4861,8 +4893,15 @@ fsa * fsa_geopairs_big_hash(waptr,diffptr,
   }
   if (dense_op)
     tmalloc(fsarow,int,ne)
-  else
-    tmalloc(fsarow,int,2*ne+1)
+  else {
+	 if (do_slowmin)  {
+		tmalloc(row2,fsa_row2,ne+1);
+  		row2_data=(short int *) row2;
+  		row2=(fsa_row2 *) (row2_data +1); // room for length
+	}
+	else
+    		tmalloc(fsarow,int,2*ne+1);
+  }
  
   cstate = 0;
   if (dense_op)
@@ -4873,6 +4912,7 @@ fsa * fsa_geopairs_big_hash(waptr,diffptr,
       printf("processed/total states\n");
   int local_state=0;
   int tmin1=no_states-1;
+  //int total_size=0;
   while (++cstate <= next_state) {
     if (cstate%500==0 && counter)
             printf(
@@ -4945,17 +4985,41 @@ fsa * fsa_geopairs_big_hash(waptr,diffptr,
 	   statetokey[state_i][local_state].diff=ht_ptr[1];
 	}
 	if (im>0) {
-	      fsarow[++len] = e;
-	      fsarow[++len] = im;
+	      	if (do_slowmin)
+	      	{
+	
+			unsigned short state2 = im / (1<<16);
+			row2[len].transition=e;
+			row2[len].state1=im % (1<<16);
+			row2[len].state2=state2;
+			len++;
+	      	}
+		else
+		{
+	      		fsarow[++len] = e;
+	      		fsarow[++len] = im;
+		}
 	      nt++;
 	}
     }   /* for (g1=1;g1<=ngens1; ... */
-    fsarow[0] = len++;
-    fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
+    if (do_slowmin)
+    {
+	*row2_data=len;
+    	fwrite((void *)row2_data,sizeof(short int),1,tempfile);
+    	fwrite((void *)row2,sizeof(fsa_row2),(size_t)len,tempfile);
+    }
+    else
+    {
+    	fsarow[0] = len++;
+    //total_size+=4*len;
+    	fwrite((void *)fsarow,sizeof(int),(size_t)len,tempfile);
+    }
   }  /*while (++cstate <= ht.num_recs) */
   fclose(tempfile);
 
   ns=next_state;
+  //printf("total_size=%d, no_of_states=%d\n",total_size,ns);
+  //exit(99);
   geopairsptr->states->size=ns;
   geopairsptr->table->numTransitions = nt;
 
@@ -5037,19 +5101,22 @@ fsa * fsa_geopairs_big_hash(waptr,diffptr,
        no_hash_entries,no_next_values,no_hash_entries,depth);
 
   hash_clear(&ht);
-  tfree(fsarow);
+  if (do_slowmin)
+	tfree(row2_data)
+  else
+  	tfree(fsarow);
   if (destroy) {
      fsa_clear(waptr); fsa_clear(diffptr);
   }
 /* Now read the transition table back in */
 //Printf("reading tempfile in - is it too big????\n");
 //Printf("no of states is %d, transitions is %d\n",ns,nt);
-  tempfile = fopen(tempfilename,"r");
-  compressed_transitions_read(geopairsptr,tempfile);
-  fclose(tempfile);
-//Printf("read it!!!!\n");
-
-  unlink(tempfilename);
+  if (!do_slowmin) {
+  	tempfile = fopen(tempfilename,"r");
+  	compressed_transitions_read(geopairsptr,tempfile);
+  	fclose(tempfile);
+  	unlink(tempfilename);
+  }
  if (geopairsptr)
   return geopairsptr;
  exit(99);
@@ -7502,6 +7569,8 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
     cs_ptre = short_hash_rec(&ht,cstate) + short_hash_rec_len(&ht,cstate) - 1;
     if (!dense_op)
       len = 0;
+    //int limit=4000;
+    //int transitions=0;
     for (g1=1;g1<=ngens;g1++) {
 /* Calculate action of generator g1 on state cstate  - to get the image, we
  * have to apply (g1,g2) to each element in the subset corresponding to cstate,
@@ -7513,7 +7582,7 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
       boolean looking_for_1s=FALSE;
       boolean found_1s=FALSE;
       boolean accept_state = FALSE;
-      if (wa1state==fail_state) { 
+      if ((wa1state==fail_state) /*|| (transitions>limit)*/) { 
 	// only interested in success states!!!
         fsarow[g1-1] = 0; 
 	continue;
@@ -7521,6 +7590,7 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
 /* check if any of the wd's of this state have a transition by g1/x to 1 */
 /* If not, then this must be a lhs which doesnt fellow travel yet => new wd(s) */
       }
+      //transitions++;
        for (i=1;i<=ndiff;i++) {
          cf[i] = 0;
        }
@@ -7639,4 +7709,238 @@ Printf("Extracting new word differences from geowa, wa  and diff2\n");
   	return wa; // scan using -t switch
   return NULL;
 
+}
+
+int fsa_minimize_slow(fsa *fsaptr,char *tempfilename)
+{
+  int *block_numa, *block_numb, *block_swap, i, j, k, l, len, *ptr, *ptr2,
+      *ptr2e, *ht_ptr, ne, ns_orig, **table, ns_final, ns_new, num_iterations;
+  hash_table ht;
+  boolean fixed, acc;
+  Printf("minimize_slow using %s\n",tempfilename);
+
+  if (fsaptr->table->table_type == SPARSE && fsaptr->table->denserows > 0) {
+    fprintf(stderr, "Sorry: fsa_minimize unavailable for sparse storage with "
+                    "dense rows.\n");
+    return -1;
+  }
+
+  if (kbm_print_level >= 3)
+    printf("    #Calling fsa_minimize.\n");
+  if (!fsaptr->flags[DFA]) {
+    fprintf(stderr, "Error: fsa_minimize only applies to DFA's.\n");
+    return -1;
+  }
+  if (fsaptr->flags[MINIMIZED])
+    return 0;
+
+  if (fsaptr->flags[RWS])
+    fsa_clear_rws(fsaptr);
+
+  acc = fsaptr->flags[ACCESSIBLE] || fsaptr->flags[TRIM];
+  if (!acc)
+    fsa_set_is_accessible(fsaptr);
+
+  ns_orig = fsaptr->states->size;
+  if (ns_orig == 0) {
+    fsaptr->flags[TRIM] = TRUE;
+    fsaptr->flags[MINIMIZED] = TRUE;
+    tfree(fsaptr->is_accessible);
+    return 0;
+  }
+
+  /* First throw away any existing structure on the state-set. */
+  srec_clear(fsaptr->states);
+  fsaptr->states->type = SIMPLE;
+  ne = fsaptr->alphabet->size;
+//  table = fsaptr->table->table_data_ptr;
+
+  tmalloc(block_numa, int, ns_orig + 1);
+  tmalloc(block_numb, int, ns_orig + 1);
+  for (i = 0; i <= ns_orig; i++)
+    block_numb[i] = 0;
+  /* Start with block_numa equal to the accept/reject division
+   * Remember that state/block number 0 is always failure with no hope.
+   */
+  if (fsaptr->num_accepting == ns_orig) {
+    block_numa[0] = 0;
+    for (i = 1; i <= ns_orig; i++)
+      if (acc || fsaptr->is_accessible[i])
+        block_numa[i] = 1;
+      else
+        block_numa[i] = 0;
+  }
+  else {
+    for (i = 0; i <= ns_orig; i++)
+      block_numa[i] = 0;
+    for (i = 1; i <= fsaptr->num_accepting; i++)
+      if (acc || fsaptr->is_accessible[fsaptr->accepting[i]])
+        block_numa[fsaptr->accepting[i]] = 1;
+  }
+
+  fixed = fsaptr->table->table_type == DENSE;
+
+  ns_new = 1;
+  num_iterations = 0;
+  /* The main refinement loop follows. */
+  fsa_row2 *row2;
+  short int lenx;
+  size_t bytes_read;
+  tmalloc(row2,fsa_row2,ne);
+  do {
+  if ((rfile = fopen(tempfilename,"r")) == 0) {
+        fprintf(stderr,"Cannot open file %s.\n",tempfilename);
+          exit(1);
+   }
+    num_iterations++;
+    ns_final = ns_new;
+    /* Turn off excessive printing at this point */
+    j = kbm_print_level;
+    kbm_print_level = 1;
+    hash_init(&ht, fixed, ne + 1, 0, 0);
+    kbm_print_level = j;
+    if (kbm_print_level >= 3)
+      printf("    #Iterating - number of state categories = %d.\n", ns_new);
+    block_numb[0] = 0;
+    for (i = 1; i <= ns_orig; i++)
+    {
+  	bytes_read=fread(&lenx,sizeof(short int),1,rfile);
+  	bytes_read=fread(row2,sizeof(fsa_row2),lenx,rfile);
+      if (acc || fsaptr->is_accessible[i]) {
+        /* Insert the encoded form of the transitions from state i into the
+         * hashtable preceded by the current block number of i.
+         */
+        //len = fixed ? ne + 1 : table[i + 1] - table[i] + 1;
+        len=lenx;
+        ptr = ht.current_ptr;
+        *ptr = block_numa[i];
+        if (fixed) {
+ //		not yet implemented
+ //         for (j = 1; j < len; j++)
+ //           ptr[j] = block_numa[table[j][i]];
+  //        l = len;
+	    exit(99);
+        }
+        else {
+          l = 0;
+          for (j = 1; j <= len; j++ ) {
+            int statex=row2[j-1].state1 + (row2[j-1].state2 * 1<<16);
+            k = block_numa[statex];
+            if (k > 0) {
+              ptr[++l] = row2[j-1].transition;
+              ptr[++l] = k;
+            }
+          }
+          if (l > 0 || *ptr > 0)
+            l++;
+          /* For technical reasons, we want the zero record to be empty */
+        }
+        block_numb[i] = hash_locate(&ht, l);
+        if (block_numb[i] == -1)
+          return -1;
+      }
+      else
+        block_numb[i] = 0;
+    }  //  for (i = 1; i <= ns_orig; i++)
+
+    fclose(rfile);
+    ns_new = ht.num_recs;
+    block_swap = block_numa;
+    block_numa = block_numb;
+    block_numb = block_swap;
+    if (ns_new > ns_final)
+      hash_clear(&ht);
+  } while (ns_new > ns_final);
+  tfree(row2);
+
+  if (kbm_print_level >= 4) { /* print out old-new state correspondence */
+    printf("Old State   NewState\n");
+    for (i = 1; i <= ns_orig; i++)
+      printf("   %6d     %6d\n", i, block_numa[i]);
+  }
+
+  /* At this stage, either ns_final = ns_new, or the fsa has empty accepted
+   * language, ns_new=0 and ns_final=1.
+   */
+
+  fsaptr->flags[TRIM] = TRUE;
+  fsaptr->flags[MINIMIZED] = TRUE;
+
+  if (ns_new == 0) {
+    /* This is the awkward case of no states - always causes problems! */
+    fsaptr->states->size = 0;
+    fsaptr->num_initial = 0;
+    tfree(fsaptr->initial);
+    fsaptr->num_accepting = 0;
+    tfree(fsaptr->accepting);
+    tfree(fsaptr->table->table_data_ptr[0]);
+    tfree(fsaptr->table->table_data_ptr);
+  }
+  else if (ns_final < ns_orig) {
+    /* Re-define the fsa fields  */
+    fsaptr->states->size = ns_final;
+
+    fsaptr->initial[1] = block_numa[fsaptr->initial[1]];
+
+    if (fsaptr->num_accepting == ns_orig) {
+      fsaptr->num_accepting = ns_final;
+      if (ns_final == 1) {
+        tmalloc(fsaptr->accepting, int, 2);
+        fsaptr->accepting[1] = 1;
+      }
+    }
+    else {
+      tmalloc(fsaptr->is_accepting, boolean, ns_final + 1);
+      for (i = 1; i <= ns_final; i++)
+        fsaptr->is_accepting[i] = FALSE;
+      for (i = 1; i <= fsaptr->num_accepting; i++)
+        fsaptr->is_accepting[block_numa[fsaptr->accepting[i]]] = TRUE;
+      fsaptr->num_accepting = 0;
+      for (i = 1; i <= ns_final; i++)
+        if (fsaptr->is_accepting[i])
+          fsaptr->num_accepting++;
+      tfree(fsaptr->accepting);
+      tmalloc(fsaptr->accepting, int, fsaptr->num_accepting + 1);
+      j = 0;
+      for (i = 1; i <= ns_final; i++)
+        if (fsaptr->is_accepting[i])
+          fsaptr->accepting[++j] = i;
+      tfree(fsaptr->is_accepting);
+    }
+
+    /* Finally copy the transition table data from the hash-table back to the
+     * fsa */
+    //tfree(fsaptr->table->table_data_ptr[0]);
+    //tfree(fsaptr->table->table_data_ptr);
+    if (fixed) {
+      fsa_table_init(fsaptr->table, ns_final, ne);
+      table = fsaptr->table->table_data_ptr;
+      for (i = 1; i <= ns_final; i++) {
+        ht_ptr = hash_rec(&ht, i);
+        for (j = 1; j <= ne; j++)
+          table[j][i] = ht_ptr[j];
+      }
+    }
+    else {
+      tmalloc(fsaptr->table->table_data_ptr, int *, ns_final + 2);
+      tmalloc(fsaptr->table->table_data_ptr[0], int, ht.tot_space - ns_final);
+      table = fsaptr->table->table_data_ptr;
+      table[1] = ptr = table[0];
+      for (i = 1; i <= ns_final; i++) {
+        ht_ptr = hash_rec(&ht, i);
+        ptr2 = ht_ptr + 1;
+        ptr2e = ht_ptr + hash_rec_len(&ht, i) - 1;
+        while (ptr2 <= ptr2e)
+          *(ptr++) = *(ptr2++);
+        table[i + 1] = ptr;
+      }
+    }
+  }
+  hash_clear(&ht);
+  tfree(block_numa);
+  tfree(block_numb);
+  tfree(fsaptr->is_accessible);
+  if (kbm_print_level >= 3)
+    printf("    #Number of iterations = %d.\n", num_iterations);
+  return 0;
 }
