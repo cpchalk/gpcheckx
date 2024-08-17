@@ -376,7 +376,15 @@ h93.wa will now be correct. Follow up with,
 
 h93.wa and h93.diff2 will now be correct. 
 
+The correct geodesic word acceptor and correct geodesic 
+word difference set, which show that h93 is hyperbolic, 
+can then be calculated by
 
+./bin/gpcheckx -geo -slowmin -v h93 +rptz
+
+(the -slowmin switch causes the transitions table of 
+very large fsa's to be read in a line at a time rather 
+than loaded into memory.)
 
 # Minimising time and memory requirements
 
