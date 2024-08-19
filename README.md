@@ -115,7 +115,7 @@ and can be found in the kbmag folder ag_data.
 
 (or, more efficiently)
 
-bin/gpcheckx -v -p -s '2000;2000' f29 +rptz
+bin/gpcheckx -v -p -s '2000;2000'  f29 +rptz
 
 
 (f29.wa and f29.diff2 will be correct)
@@ -447,24 +447,24 @@ inverses := [A,a,B,b
   
 equations :=
   [
-    [a^3,IdWord],
-
-    [b^5,IdWord],
-
-    [(a\*b)^7,IdWord],
-
-    [(a\*b\*A\*B)^2,IdWord]
-
-    ,[bb,b\*b], [ab,a\*b], [ab2,(a\*b)^2], 
-
-     [ab3,(a\*b)^3], [ba,b\*a] 
-
+    
+[a^3,IdWord],
+   
+[b^5,IdWord],
+    
+[(a\*b)^7,IdWord],
+   
+ [(a\*b\*A\*B)^2,IdWord]
+    
+,[bb,b\*b], [ab,a\*b], [ab2,(a\*b)^2], 
+    
+ [ab3,(a\*b)^3], [ba,b\*a] 
   ]
 );
 
-then the atomatic and hyperbolic calculation's are 
+then the atomatic and hyperbolic calculations are 
 dramatically eased and now complete in a matter of 
-minutes rather than hours !
+minutes rather than hours!
 
 With the exception of the first h93 calculation,
 the examples given here will run with 2 GB of available memory.
