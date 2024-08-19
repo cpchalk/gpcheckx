@@ -113,6 +113,11 @@ and can be found in the kbmag folder ag_data.
 
 ./bin/gpcheckx -v -p f29 +rptz
 
+(or, more efficiently)
+
+bin/gpcheckx -v -p -s '2000;2000' f29 +rptz
+
+
 (f29.wa and f29.diff2 will be correct)
 
 ./bin/gpcheckx -v -geo f29 +rptz
@@ -414,6 +419,52 @@ But if N is too small then no new word differences will be found.
 The options '-p -s N' require more time and memory.
 The option '-p' with no -s option requires the most
 time and memory of all.
+
+Also, it cannot be emphasised enough that even a trivial
+looking change to a groups presentation can effect the 
+difficulty of the automaticity and hyperbolic calculations 
+drastically.  
+
+For example if five redundant generators and their 
+inverses are added to the group 3572, defined above,  
+so that its definition now reads
+
+_RWS := rec
+(
+  isRWS := true,
+
+  ordering := "shortlex",
+
+  generatorOrder := [a,A,b,B
+
+,ab,BA,ba,AB,bb,BB,ab2,BA2,ab3,BA3
+],
+  
+inverses := [A,a,B,b
+
+,BA,ab,AB,ba,BB,bb,BA2,ab2,BA3,ab3
+],
+  
+equations :=
+  [
+    [a^3,IdWord],
+
+    [b^5,IdWord],
+
+    [(a\*b)^7,IdWord],
+
+    [(a\*b\*A\*B)^2,IdWord]
+
+    ,[bb,b\*b], [ab,a\*b], [ab2,(a\*b)^2], 
+
+     [ab3,(a\*b)^3], [ba,b\*a] 
+
+  ]
+);
+
+then the atomatic and hyperbolic calculation's are 
+dramatically eased and now complete in a matter of 
+minutes rather than hours !
 
 With the exception of the first h93 calculation,
 the examples given here will run with 2 GB of available memory.
