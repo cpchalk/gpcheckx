@@ -154,6 +154,11 @@ then be computed as follows.
 
 3572
 
+(this calculation takes several hours to complete but would
+only take several minutes if 3572 were defined in a different 
+way. See the 'Minimising time...' section below for more
+details.)
+
 ./bin/kbprog -wd -t 1000 -me 200000 3572
 
 ./bin/gpcheckx -v -p -s ‘60000;10000’ 3572 +rptz
@@ -161,7 +166,9 @@ then be computed as follows.
 ./bin/gpcheckx -geo -v 3572 +rptz
 
 
-h93 (this calculation requires 8GB of memory)
+h93
+
+ (this calculation requires 8GB of memory)
 
 ./bin/kbprog -wd -t 1500 -me 500000 h93
 
@@ -205,8 +212,8 @@ calculated as follows.
 
 
 See the 'Add diagonals' section for quicker and 
-less memory intensive ways to do the automatic
-structure calculations for h93 and f46.
+less memory intensive ways to carry out the 
+calculations for h93 and f46.
 
 # Proving non-hyperbolicity.
 
