@@ -1,4 +1,4 @@
-# gpcheckx
+by# gpcheckx
 
 A kbmag program that can be used to efficiently find the word differences  
 needed to build the correct automatic structure of a group gpname. 
@@ -421,7 +421,7 @@ The option '-p' with no -s option requires the most
 time and memory of all.
 
 Also, it cannot be emphasised enough that even a trivial
-looking change to a groups presentation can effect the 
+looking change to a groups presentation can affect the 
 difficulty of the automaticity and hyperbolic calculations 
 drastically.  
 
