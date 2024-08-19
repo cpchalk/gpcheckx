@@ -1,4 +1,4 @@
-by# gpcheckx
+# gpcheckx
 
 A kbmag program that can be used to efficiently find the word differences  
 needed to build the correct automatic structure of a group gpname. 
