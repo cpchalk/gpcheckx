@@ -115,7 +115,7 @@ and can be found in the kbmag folder ag_data.
 
 (or, more efficiently)
 
-bin/gpcheckx -v -p -s '2000;2000'  f29 +rptz
+./bin/gpcheckx -v -p -s '2000;2000'  f29 +rptz
 
 
 (f29.wa and f29.diff2 will be correct)
@@ -462,8 +462,8 @@ equations :=
   ]
 );
 
-then the atomatic and hyperbolic calculations are 
-dramatically eased and now complete in a matter of 
+then the automatic and hyperbolic calculations are 
+dramatically eased and will now complete in a matter of 
 minutes rather than hours!
 
 With the exception of the first h93 calculation,
@@ -483,7 +483,7 @@ J. Algebra 324(5) (2010), 1076-1082. 48
 
 h93
 
-Ihechukwu Chinyerea, Gerald Williams,
+Ihechukwu Chinyere, Gerald Williams,
 Hyperbolic groups of Fibonacci type and T(5) cyclically presented groups⋆
 https://arxiv.org/pdf/2008.08986
 
