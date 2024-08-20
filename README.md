@@ -115,7 +115,7 @@ and can be found in the kbmag folder ag_data.
 
 (or, more efficiently)
 
-./bin/gpcheckx -v -p -s '2000;2000'  f29 +rptz
+./bin/gpcheckx -v -p -s '2000;2000' f29 
 
 
 (f29.wa and f29.diff2 will be correct)
@@ -159,9 +159,9 @@ only take several minutes if 3572 were defined in a different
 way. See the 'Minimising time...' section below for more
 details.)
 
-./bin/kbprog -wd -t 1000 -me 200000 3572
+./bin/kbprog -wd -me 200000 -t 1000  3572
 
-./bin/gpcheckx -v -p -s ‘60000;10000’ 3572 +rptz
+./bin/gpcheckx -v -p -s ‘60000;10000’ 3572 
 
 ./bin/gpcheckx -geo -v 3572 +rptz
 
@@ -208,7 +208,7 @@ calculated as follows.
 
 ./bin/kbprog -wd -t 1000 -me 200000 f46
 
-./bin/gpcheckx -v -p -s ‘4000;1000’ f46 +rptz
+./bin/gpcheckx -v -p -s ‘4000;1000’ f46 
 
 
 See the 'Add diagonals' section for quicker and 
@@ -315,7 +315,7 @@ Run parts 1 and 2 of the 'add diagonals' script four times.
 
 ./bin/gpcheckx -v -w -diff2name diags -m -s 40000 f46
 
-./bin/gpcheckx -v -m -s '60000;20000' f46 +rptz
+./bin/gpcheckx -v -m -s '60000;20000' f46 
 
 ./bin/gpcheckx -v -p f46 +wrptz
 
@@ -469,8 +469,14 @@ equations :=
   ]
 );
 
-then the automatic and hyperbolic calculations are 
-dramatically eased and will now complete in a matter of 
+then the automatic and hyperbolic calculations,
+using, for example,
+
+./bin/kbprog -wd -me 20000  3572;
+./bin/gpcheckx -p -s '2000;2000' 3572;
+./bin/gpcheckx -geo 3572 +rptz
+
+are dramatically eased and will now complete in a matter of 
 minutes rather than hours!
 
 With the exception of the first h93 calculation,
