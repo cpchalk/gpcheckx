@@ -228,11 +228,19 @@ achieved by specifying the -ve option. For example
 
 # Truncating a large word acceptor
 
-If a word acceptor, W, consists of M states, then we can 
-truncate it in memory to a smaller number,N(<M),of states by treating 
-all states with number greater than N as fail states of W. 
+gpcheckx produces a list of lhs_words from which we 
+attempt to calculate new word differences. 
 
-We specify this by the -s N (or -s 'Base;Increment') switch.
+Each such lhs_word, w, traces a unique path of 
+numbered states in the current word acceptor. 
+We call this path of states, the state set of w.
+
+'Truncation' by a value N means that gpcheckx is 
+constrained to produce just those lhs_words whose 
+state set only contain states which are <= N.
+
+We specify this truncation by the -s N or 
+-s 'Base;Increment' switches.
 
 # Using diagonals to build a 'small' and possibly correct word acceptor.  
 It has been observed that, in many cases, the complete 
