@@ -217,12 +217,18 @@ calculations for h93 and f46.
 
 # Proving non-hyperbolicity.
 
-If we suspect that a group is not hyperbolic (for example the group
-F(4,6), defined above, turns out not to be hyperbolic), it can be useful
+If we suspect that a group is not hyperbolic 
+(for example the group F(4,6), defined above, 
+turns out not to be hyperbolic - the interested 
+reader is invited to use kbmag tools and f46.wa to
+show that the words aCCb, aDDa generate the 
+free abelian group ZxZ), it can be useful
 to spot patterns, that might indicate the presence 
-of 'fat triangles', by tracing the geodesic equations which give rise
-to new geodesic word differences. This is
-achieved by specifying the -ve option. For example
+of 'fat triangles', by tracing the geodesic equations 
+which give rise to new geodesic word differences. 
+This is achieved by specifying the -ve option. 
+
+For example
 
 ./bin/gpcheckx -geo -ve f46
 
