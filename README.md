@@ -511,8 +511,11 @@ J. Algebra 324(5) (2010), 1076-1082. 48
 h93
 
 Ihechukwu Chinyere, Gerald Williams,
-Hyperbolic groups of Fibonacci type and T(5) cyclically presented groups⋆
-https://arxiv.org/pdf/2008.08986
+Hyperbolic groups of Fibonacci type and T(5) cyclically presented groups
+
+J. Algebra, 580:104-126, 2021.
+
+(https://arxiv.org/pdf/2008.08986)
 
 f46, f29
 
