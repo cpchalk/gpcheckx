@@ -248,7 +248,7 @@ by, for example,
 
 Then, by examining, the output of
 
-./bin/gpcheckx -geo -ve G35
+./bin/gpcheckx -geo -ve G53
 
 for new geodesic word differences which are powers
 of U\*T^2, it can be straightforwardly shown in kbmag 
