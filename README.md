@@ -220,7 +220,7 @@ calculations for h93 and f46.
 If we suspect that a group is not hyperbolic 
 (for example the group F(4,6), defined above, 
 turns out not to be hyperbolic - the interested 
-reader is invited to use kbmag tools and f46.wa to
+reader is invited to use kbmag tools /bin/wordreduce and f46.wa to
 show that the words aCCb, aDDa generate the 
 free abelian group ZxZ), it can be useful
 to spot patterns, that might indicate the presence 
@@ -228,9 +228,33 @@ of 'fat triangles', by tracing the geodesic equations
 which give rise to new geodesic word differences. 
 This is achieved by specifying the -ve option. 
 
-For example
+For example, the group G(5,3) (provided by Martin Edjvet), defined 
+by the file,G53
 
-./bin/gpcheckx -geo -ve f46
+_RWS := rec(
+  isRWS := true,
+  ordering := “shortlex”,
+  generatorOrder := [t,T,u,U],
+  inverses := [T,t,U,u],
+ equations := [[t^2,IdWord],[b^5,IdWord],[(a\*b)^7,IdWord],[(a\*b\*A\*B)^2,IdWord]]
+);
+
+is automatic and its diff2 and wa files can be calculated 
+by, for example
+./bin/kbprog -wd -me 80000 -t 1000 -v G53
+./bin/gpcheckx -p -v -s '8000;3000' G53
+
+Then, by examining, the output of
+
+./bin/gpcheckx -geo -ve G35
+
+for new geodesic word differences which are powers
+of U\*T^2, it can be straightforwardly shown that the words
+
+U^3*T*U*t*u*T^3*U*t^2*U^2*T 
+and
+t*U*T*u*t*u^3*t^2*U^2*T*u*t^2
+commute and generate ZxZ.
 
 # Truncating a large word acceptor
 
