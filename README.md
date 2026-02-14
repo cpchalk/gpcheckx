@@ -240,8 +240,10 @@ _RWS := rec(
 );
 
 is automatic and its diff2 and wa files can be calculated 
-by, for example
+by, for example,
+
 ./bin/kbprog -wd -me 80000 -t 1000 -v G53
+
 ./bin/gpcheckx -p -v -s '8000;3000' G53
 
 Then, by examining, the output of
@@ -249,11 +251,15 @@ Then, by examining, the output of
 ./bin/gpcheckx -geo -ve G35
 
 for new geodesic word differences which are powers
-of U\*T^2, it can be straightforwardly shown that the words
+of U\*T^2, it can be straightforwardly shown in kbmag 
+that the words
 
-U^3*T*U*t*u*T^3*U*t^2*U^2*T 
+U^3\*T\*U\*t\*u\*T^3\*U\*t^2\*U^2\*T 
+
 and
-t*U*T*u*t*u^3*t^2*U^2*T*u*t^2
+
+t\*U\*T\*u\*t\*u^3\*t^2*U^2\*T\*u\*t^2
+
 commute and generate ZxZ.
 
 # Truncating a large word acceptor
