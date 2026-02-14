@@ -236,7 +236,7 @@ _RWS := rec(
   ordering := “shortlex”,
   generatorOrder := [t,T,u,U],
   inverses := [T,t,U,u],
- equations := [[t^2,IdWord],[b^5,IdWord],[(a\*b)^7,IdWord],[(a\*b\*A\*B)^2,IdWord]]
+ equations := [[(t^2)^5,IdWord],[t^5\*u\*t,u^3]]
 );
 
 is automatic and its diff2 and wa files can be calculated 
