@@ -284,10 +284,10 @@ set of word differences of an automatic group consists entirely,
 or almost entirely, of so called 'diagonal' word differences. 
 If two word differences wd1 and wd2 satisfy the equation 
 wd2=g1^-1wd1g2, for some generators g1, g2,
-then the word diagwd=g1^-1wd1 is called a diagonal of wd1. 
+then wd2 is called a diagonal of wd1. 
 
 This observation suggests that adding all possible 
-diagonals to a the word difference set might 
+diagonals to the current word difference set might 
 result in the correct word acceptor being built.
 
 The options
