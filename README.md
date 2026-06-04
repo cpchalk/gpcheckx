@@ -311,7 +311,7 @@ Example: f29 calculation using diagonals.
 
 'f29.wa now correct'
 
-./bin/gpcheckx -p -diff2name diags -w +rptz
+./bin/gpcheckx -p -diff2name diags -w f29 +rptz
 
 'f29.diff2 now correct'
 
