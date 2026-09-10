@@ -1199,8 +1199,8 @@ int main2(argc, argv, read_last_wa,wa_size)
 	read_wa=FALSE;
   if (!use_andnot && !read_wa && !exwa_command) {
       if (add_diagonals) {
-        Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname,hashlimit);
-      	gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE);
+        Printf("calling fsa_wa_x on %s.diff2 with diagonals added\n",gpname);
+      	gpwa=fsa_wa_x(diag_diff2,op_store,tempfilename,FALSE,hashlimit);
     	free_fsa(diag_diff2);
       }
       else {
