@@ -453,19 +453,37 @@ scanning lists of lhs words for new word differences
 building a 'triples' fsa to recognise fellow travelling
 lhs=rhs equations and calculate new ones.
 
-There is currently no ability to reduce the time and 
-memory reqirements to build a word acceptor. The only solution 
-to improve this is to either have more patience or use a faster 
-computer with more memory.
+The gpcheckx function fsa_wa_x is quicker than the corresponding kbmag
+function fsa_wa at building a word acceptor fsa from a given set of word 
+differences. But, for larger word difference sets, the maf program,
+gpwa, is much quicker still. The gpcheckx switch -execwa enables the 
+word acceptor to be built by an external program. For example, the
+command line  shown above
+
+./bin/gpcheckx  -diagonals  -diff2name diags -v h93
+
+could be replaced by
+
+./bin/gpcheckx  -diagonals  -diff2name diags -execwa './dowa h93 diags -quiet' -v h93
+
+where dowa contains
+
+cp $1.diff2$2 $1.diff1c
+./maf/bin/gpwa $3 $1
+cp $1.pwa $1.wa
+
+to run the maf program gpwa instead of the internal function fsa_wa_x.
 
 The -to S option stops the scanning lists process after S seconds.
 In addition, a SINGLE Control & C from the keypad will also cause
-the scanning process to stop. 
+the scanning process to stop and allow a new diff2 to be built from
+any additional word differences detected up to that point.
 
 For a given N, the '-m -s N' option does the  building of a 'triples'
 part with the least memory/processing time requirement. The smaller N is, 
 the smaller the processing time and memory requirements will be.
-But if N is too small then no new word differences will be found.
+But if N is too small then no new word differences will be found in the
+subsequent scan.
 
 The options '-p -s N' require more time and memory.
 The option '-p' with no -s option requires the most
