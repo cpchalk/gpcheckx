@@ -469,7 +469,9 @@ could be replaced by
 where dowa contains
 
 cp $1.diff2$2 $1.diff1c
+
 ./maf/bin/gpwa $3 $1
+
 cp $1.pwa $1.wa
 
 to run the maf program gpwa instead of the internal function fsa_wa_x.
