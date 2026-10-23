@@ -2581,7 +2581,7 @@ else
 		if (timeout==0)
 		{
 			if (!andnotx) { // we seem to get this error when the andnot is truncated
-				PPrintf("!t");
+				PPrintf("!t generator of order 2 with different invers?");
 				timeout = total_t + 300;
                   		display_eqn(si,lhs_word,rhs_word,
 					diff2->alphabet->base->names);
