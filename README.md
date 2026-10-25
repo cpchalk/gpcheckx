@@ -298,7 +298,7 @@ _RWS:= rec(
 
 );
 This group is automatic and the correct 
-237c.wa and 237c.diff2 files are quickly 
+237cxyz.wa and 237cxyz.diff2 files are quickly 
 cakculated using, for example 
 
 ./bin/kbprog -wd -t 10000 -me 30000 237cxyz
