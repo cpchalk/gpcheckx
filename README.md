@@ -696,3 +696,12 @@ D.F. Holt, B. Eick and E.A. O’Brien,
 Handbook of Computational Group Theory, 
 CRCPress, Boca Raton, 2005. Section 13.4
 
+<2,3,7;12>
+Polynomial-time proofs that groups are hyperbolic
+D.F Holt et al
+https://www.sciencedirect.com/science/article/pii/S0747717120300845
+Theorem 9.8
+
+
+
+
