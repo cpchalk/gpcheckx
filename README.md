@@ -262,6 +262,123 @@ t\*U\*T\*u\*t\*u^3\*t^2*U^2\*T\*u\*t^2
 
 commute and generate ZxZ.
 
+Derek Holt gave a computer proof that the Coxeter 
+group <2,3,7;12> defined by
+<a,b|a^2=b^3=(ab)^7=[a,b]^12> is not hyperbolic by
+demonstrating that it contained ZxZ as a subgroup.
+This can be also be shown using gpcheckx as follows.
+
+Define an alternative presentation of <2,3,7;12>
+that includes three redundant generators x, y and z
+by the file 237cxyz that contains
+
+_RWS:= rec(
+
+        isRWS:=true,
+
+        generatorOrder:=[a,b,B,x,X,y,z,Z],
+
+        inverses:=[a,B,b,X,x,y,Z,z],
+
+        ordering:="shortlex",
+
+        equations:=[
+
+
+            [b^3,IdWord],
+
+            [(a\*b)^7,IdWord],
+
+            [(a\*b\*a\*B)^12,IdWord]
+
+
+  ,[a\*b,x],[B\*x,y],[a\*y,z]
+
+                   ]
+
+);
+This group is automatic and the correct 
+237c.wa and 237c.diff2 files are quickly 
+cakculated using, for example 
+
+./bin/kbprog -wd -t 10000 -me 30000 237cxyz
+./bin/gpcheckx -p 237cxyz +rptz
+
+Let q=XZXZZZ, r=zxzzzx
+
+The output from four successive iterations within
+the geodesic word difference extraction started by
+ 
+./bin/gpcheckx -geo -ve 237cxyz +rptz
+
+includes the following four LHS->RHS equations 
+
+27. zxaXZZqqqZXyxzzxrzbZZZB
+
+ -> xrrzxzzzzbZXZZqqXZXZZBz
+
+--
+
+27. zxaXZZqqqZXyxzzxrrzbZZZB
+
+ -> xrrrzxzzzzbZXZZqqXZXZZBz
+
+--
+
+27. zxaXZZqqqqZXyxzzxrrzbZZZB
+
+ -> xrrrzxzzzzbZXZZqqqXZXZZBz
+
+--
+
+27. zxaXZZqqqqZXyxzzxrrrzbZZZB
+
+ -> xrrrrzxzzzzbZXZZqqqXZXZZBz
+
+
+
+In general, let K,L,M,D,E,F, q, r be fixed words, n>2 , 
+
+then
+
+Kq^n+1Lr^n-1M=Dr^nEq^nF
+
+Kq^n+1Lr^nM=Dr^n+1Eq^nF
+
+Implies
+
+Dr^-1D^-1Kq^n+1Lr^nM= Kq^n+1Lr^n-1M
+
+and so
+
+K^-1Dr^-1D^-1Kq^n+1= q^n+1Lr^-1L^-1
+
+
+For n=2,3
+
+K^-1Dr^-1D^-1Kq^3= q^3Lr^-1L^-1
+
+K^-1Dr^-1D^-1Kq^4= q^4Lr^-1L^-1
+
+implies that
+
+q Lr^-1L^-1 = Lr^-1L^-1 q
+
+
+By setting q=XZXZZZ, r=zxzzzx and L = ZXyxzzx, 
+we conclude, from our four equations above,
+that XZXZZZ commutes with the value 
+
+ZXyxzzx (zxzzzx)^-1 (ZXyxzzx)^-1 
+
+which shortlex reduces to zxzxzz.
+
+The word acceptor 237cxyz.wa shows that all powers 
+of XZXZZZ and zxzxzz are accepted as shortlex reduced, 
+so these two words generate ZxZ.
+
+
+
 # Truncating a large word acceptor
 
 gpcheckx produces a list of lhs_words from which we 
