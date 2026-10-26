@@ -290,9 +290,9 @@ _RWS:= rec(
 
             [b^3,IdWord],
 
-            [(a\*b)^7,IdWord],
+            [(a*b)^7,IdWord],
 
-            [(a\*b\*a\*B)^12,IdWord]
+            [(a*b*a*B)^12,IdWord]
 
 
   ,[a\*b,x],[B\*x,y],[a\*y,z]
