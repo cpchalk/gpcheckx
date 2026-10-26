@@ -266,7 +266,7 @@ Derek Holt gave a computer proof that the Coxeter
 group <2,3,7;12> defined by
 <a,b|a^2=b^3=(ab)^7=[a,b]^12> is not hyperbolic by
 demonstrating that it contained ZxZ as a subgroup.
-This can be also be shown using gpcheckx as follows.
+This can also be shown using gpcheckx as follows.
 
 Define an alternative presentation of <2,3,7;12>
 that includes three redundant generators x, y and z
@@ -307,31 +307,32 @@ cakculated using, for example
 Let q=XZXZZZ, r=zxzzzx
 
 The output from four successive iterations within
-the geodesic word difference extraction started by
+the geodesic word difference extraction process 
+initiated by
  
 ./bin/gpcheckx -geo -ve 237cxyz +rptz
 
 includes the following four LHS->RHS equations 
 
-27. zxaXZZqqqZXyxzzxrzbZZZB
+zxaXZZqqqZXyxzzxrzbZZZB
 
  -> xrrzxzzzzbZXZZqqXZXZZBz
 
 --
 
-27. zxaXZZqqqZXyxzzxrrzbZZZB
+zxaXZZqqqZXyxzzxrrzbZZZB
 
  -> xrrrzxzzzzbZXZZqqXZXZZBz
 
 --
 
-27. zxaXZZqqqqZXyxzzxrrzbZZZB
+zxaXZZqqqqZXyxzzxrrzbZZZB
 
  -> xrrrzxzzzzbZXZZqqqXZXZZBz
 
 --
 
-27. zxaXZZqqqqZXyxzzxrrrzbZZZB
+zxaXZZqqqqZXyxzzxrrrzbZZZB
 
  -> xrrrrzxzzzzbZXZZqqqXZXZZBz
 
