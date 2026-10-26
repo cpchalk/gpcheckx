@@ -264,8 +264,11 @@ commute and generate ZxZ.
 
 Derek Holt gave a computer proof that the Coxeter 
 group <2,3,7;12> defined by
-<a,b|a^2=b^3=(ab)^7=[a,b]^12> is not hyperbolic by
-demonstrating that it contained ZxZ as a subgroup.
+
+<a,b|a^2=b^3=(ab)^7=[a,b]^12> 
+
+is not hyperbolic by demonstrating that it contained
+ ZxZ as a subgroup. 
 This can also be shown using gpcheckx as follows.
 
 Define an alternative presentation of <2,3,7;12>
@@ -301,7 +304,7 @@ This group is automatic and the correct
 237cxyz.wa and 237cxyz.diff2 files are quickly 
 cakculated using, for example 
 
-./bin/kbprog -wd -t 10000 -me 30000 237cxyz
+./bin/kbprog -wd -t 1000 -me 30000 237cxyz
 ./bin/gpcheckx -p 237cxyz +rptz
 
 Let q=XZXZZZ, r=zxzzzx
