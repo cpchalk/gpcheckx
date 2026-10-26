@@ -2898,9 +2898,9 @@ boolean look_for_diffs(lhs,rhs,rs_wd,new_states,new_states_number,
               printf( " new word difference %s (%d) ",wdx,xi+1);
 	      int ii=0;
 	     printf("\n,");
-	     while (wdx[ii]!=0x0) 
-		printf("%c\\*",wdx[ii++]);
-	     printf("\n");
+	     //while (wdx[ii]!=0x0) 
+		//printf("%c\\*",wdx[ii++]);
+	     //printf("\n");
           }
           // calculate inverse
           xj=genstrlen(wd);
@@ -2941,8 +2941,8 @@ boolean look_for_diffs(lhs,rhs,rs_wd,new_states,new_states_number,
           update_table(table_dptr,rs_wd,wdr,
 			new_states,new_states_number,inv);
   	  } 
-          if (trace_equations) 
-              printf ("(%s)\n",wdx);
+         // if (trace_equations) 
+              //printf ("(%s)\n",wdx);
           newone=TRUE;
         } // if strlen < 
     } // if xj > 0
