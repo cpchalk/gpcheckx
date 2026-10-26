@@ -338,7 +338,7 @@ zxaXZZqqqqZXyxzzxrrrzbZZZB
 
 
 
-In general, let K,L,M,D,E,F, q, r be fixed words, n>2 , 
+In general, let K,L,M,D,E,F,q,r be fixed words, n>1, 
 
 then
 
