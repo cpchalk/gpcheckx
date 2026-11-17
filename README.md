@@ -262,6 +262,11 @@ t\*U\*T\*u\*t\*u^3\*t^2*U^2\*T\*u\*t^2
 
 commute and generate ZxZ.
 
+The presence of one or more  geodesic trace entries of the form
+A(q)^nB -> C(q)^mD can often be an indication that the word q^d,
+where d = gcd(m,n), commutes with the words C^-1A or DB^-1. From this
+we could deduce the presence of subgroup ZxZ.
+
 Derek Holt gave a computer proof that the Coxeter 
 group <2,3,7;12> defined by
 
